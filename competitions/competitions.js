@@ -24,154 +24,97 @@ function drawGrain() {
 window.addEventListener('resize', resizeBgCanvas);
 resizeBgCanvas();
 
-// --- LIGHTNING CANVAS ---
-const lightningCanvas = document.getElementById('lightning-canvas');
-const lCtx = lightningCanvas.getContext('2d');
-function resizeLightningCanvas() {
-    lightningCanvas.width = window.innerWidth;
-    lightningCanvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeLightningCanvas);
-resizeLightningCanvas();
-
-let lightningActive = false;
-let lightningFrame;
-function drawLightning(x1, y1, x2, y2) {
-    const segments = 10;
-    lCtx.beginPath();
-    lCtx.moveTo(x1, y1);
-
-    const dx = (x2 - x1) / segments;
-    const dy = (y2 - y1) / segments;
-
-    for (let i = 1; i <= segments; i++) {
-        let targetX = x1 + dx * i;
-        let targetY = y1 + dy * i;
-        if (i < segments) {
-            targetX += (Math.random() - 0.5) * 40;
-            targetY += (Math.random() - 0.5) * 40;
-        }
-        lCtx.lineTo(targetX, targetY);
-    }
-
-    lCtx.strokeStyle = Math.random() > 0.5 ? '#ffffff' : '#c8e8ff';
-    lCtx.lineWidth = Math.random() * 2 + 1;
-    lCtx.shadowBlur = 10;
-    lCtx.shadowColor = '#b0c8ff';
-    lCtx.stroke();
-}
-function lightningLoop() {
-    if (!lightningActive) {
-        lCtx.clearRect(0, 0, lightningCanvas.width, lightningCanvas.height);
-        return;
-    }
-    lCtx.clearRect(0, 0, lightningCanvas.width, lightningCanvas.height);
-
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight / 2;
-
-    // Draw bolts from center to random nodes
-    const numBolts = Math.floor(Math.random() * 3) + 1;
-    for (let i = 0; i < numBolts; i++) {
-        if (orbitingItems.length > 0) {
-            const rNode = orbitingItems[Math.floor(Math.random() * orbitingItems.length)];
-            // approximate screen pos
-            const tarX = cx + rNode.x;
-            const tarY = cy + rNode.y;
-            drawLightning(cx, cy, tarX, tarY);
-        }
-    }
-
-    // Flicker flash
-    if (Math.random() > 0.8) {
-        document.body.classList.add('flash');
-    } else {
-        document.body.classList.remove('flash');
-    }
-
-    setTimeout(() => {
-        if (lightningActive) lightningFrame = requestAnimationFrame(lightningLoop);
-    }, 50);
-}
-
 // --- SETUP MATH ORBITS ---
 const orbitsContainer = document.getElementById('orbits-container');
 const scene = document.getElementById('scene');
 const nucleus = document.getElementById('nucleus');
 const gridContainer = document.getElementById('grid-container');
 
-const TOTAL_IMAGES = 16;
 const imgSource = "doggy.png";
 
-let orbitingItems = []; // state for math loop
+let itemsGroupA = [];
+let itemsGroupB = [];
 
-// We have 16 images. Let's make 2 intersecting elliptical paths.
-// Path 1: 8 images, Path 2: 8 images (different tilt)
-for (let i = 0; i < TOTAL_IMAGES; i++) {
+for (let i = 0; i < 8; i++) {
     const el = document.createElement('img');
     el.src = imgSource;
     el.className = 'math-orbiter';
     orbitsContainer.appendChild(el);
-
-    // Determine path assignment (0 or 1)
-    const ringIndex = i < 8 ? 0 : 1;
-    const itemsInRing = 8;
-    const indexInRing = i % itemsInRing;
-
-    orbitingItems.push({
-        el: el,
-        theta: (Math.PI * 2 / itemsInRing) * indexInRing, // evenly spaced
-        baseSpeed: 0.005 + (Math.random() * 0.001), // gentle variation
-        ringIndex: ringIndex,
-        x: 0,
-        y: 0
-    });
+    itemsGroupA.push(el);
 }
 
-// Central parameters
+for (let i = 0; i < 8; i++) {
+    const el = document.createElement('img');
+    el.src = imgSource;
+    el.className = 'math-orbiter';
+    orbitsContainer.appendChild(el);
+    itemsGroupB.push(el);
+}
+
+// ---- ORBITAL CONFIGURATION ----
+const rings = [
+    {
+        items: itemsGroupA,          // first 8 image elements
+        rx: 320,                     // horizontal radius
+        ry: 95,                      // vertical radius (squashed = 3D illusion)
+        tiltDeg: 45,                 // CSS rotation of the orbital plane
+        speed: 0.008,                // radians per frame
+        direction: 1,                // 1 = clockwise
+        baseAngle: 0
+    },
+    {
+        items: itemsGroupB,          // second 8 image elements
+        rx: 320,
+        ry: 95,
+        tiltDeg: -45,                // opposite tilt
+        speed: 0.008,
+        direction: -1,               // -1 = counter-clockwise
+        baseAngle: 0
+    }
+];
+
 let globalSpeedMultiplier = 1;
 let orbitActive = true;
+let allOrbitingElements = [...itemsGroupA, ...itemsGroupB];
 
 // The main 3D illusion loop
 function animateOrbits() {
     if (!orbitActive) return;
 
-    // Use responsive radii
-    const rxBase = Math.min(window.innerWidth * 0.35, 400);
-    const ryBase = rxBase * 0.3; // Squashed vertically for 3D
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
 
-    orbitingItems.forEach(item => {
-        // Update angle
-        item.theta += item.baseSpeed * globalSpeedMultiplier;
+    rings.forEach(ring => {
+        ring.items.forEach((item, i) => {
+            const angleOffset = (2 * Math.PI / ring.items.length) * i;
+            const theta = ring.baseAngle * ring.direction + angleOffset;
 
-        let rx = rxBase;
-        let ry = ryBase;
+            // Raw ellipse position
+            const rawX = ring.rx * Math.cos(theta);
+            const rawY = ring.ry * Math.sin(theta);
 
-        let x = rx * Math.cos(item.theta);
-        let y = ry * Math.sin(item.theta);
+            // Apply tilt rotation to (rawX, rawY)
+            const tiltRad = ring.tiltDeg * (Math.PI / 180);
+            const x = rawX * Math.cos(tiltRad) - rawY * Math.sin(tiltRad);
+            const y = rawX * Math.sin(tiltRad) + rawY * Math.cos(tiltRad);
 
-        // Ring 1 is tilted one way, Ring 2 tilted mathematically
-        // We can simulate an angled ellipse by applying a 2D rotation matrix to the x/y plane
-        const tiltAngle = item.ringIndex === 0 ? 0.4 : -0.4; // radians
+            // Depth effect: items at back are smaller and more transparent
+            const depth = Math.sin(theta);  // -1 (back) to +1 (front)
+            const scale = 0.6 + 0.4 * ((depth + 1) / 2);
+            const opacity = 0.45 + 0.55 * ((depth + 1) / 2);
+            const zIndex = Math.round(depth * 10) + 10;
 
-        const rotatedX = x * Math.cos(tiltAngle) - y * Math.sin(tiltAngle);
-        const rotatedY = x * Math.sin(tiltAngle) + y * Math.cos(tiltAngle);
+            // Center coordinates of the nucleus
+            item.style.transform = `translate(${centerX + x}px, ${centerY + y}px) scale(${scale})`;
+            item.style.opacity = opacity;
+            item.style.zIndex = zIndex;
+            item.style.position = 'fixed'; // Must be fixed to stay bound to viewport exactly
 
-        // Depth simulation from original sine wave before tilt (y axis acts as depth)
-        // sin(theta) goes from -1 (back) to +1 (front)
-        const depth = Math.sin(item.theta);
-
-        const scale = 0.65 + 0.35 * ((depth + 1) / 2); // 0.65 back, 1.0 front
-        const opacity = 0.5 + 0.5 * ((depth + 1) / 2); // 0.5 back, 1.0 front
-        const zIndex = Math.round(depth * 10) + 100;   // Nucleus is naturally at z-index 100, so items pass behind and in front (-10 to 10 relative)
-
-        // Save absolute relative for lightning
-        item.x = rotatedX;
-        item.y = rotatedY;
-
-        item.el.style.transform = `translate(${rotatedX}px, ${rotatedY}px) scale(${scale})`;
-        item.el.style.opacity = opacity;
-        item.el.style.zIndex = zIndex; // Above or below nucleus dynamically
+            // Save absolute relative position for the flyout calculation later
+            item._x = centerX + x;
+            item._y = centerY + y;
+        });
+        ring.baseAngle += ring.speed * globalSpeedMultiplier;
     });
 
     requestAnimationFrame(animateOrbits);
@@ -181,7 +124,7 @@ function animateOrbits() {
 animateOrbits();
 
 
-// --- INTERACTION & 4-PHASE SEQUENCE ---
+// --- INTERACTION & SEQUENCE ---
 
 let sequenceState = 'idle';
 
@@ -193,45 +136,34 @@ nucleus.addEventListener('click', () => {
 function executeBurstSequence() {
     sequenceState = 'running';
 
-    // Step 1: Acceleration Phase (0 - 700ms)
+    // Step 1: Acceleration Phase (0ms to 700ms)
     globalSpeedMultiplier = 5; // Speed up dramatically instantly
     nucleus.classList.add('accelerated');
 
-    // Step 2: Lightning Phase (400ms - 1100ms)
+    // Step 2: Burst & Scatter (1100ms - 1600ms)
     setTimeout(() => {
-        lightningActive = true;
-        lightningLoop();
-    }, 400);
-
-    // Step 3: Burst & Scatter (1100ms - 1600ms)
-    setTimeout(() => {
-        lightningActive = false;
-        cancelAnimationFrame(lightningFrame);
-        document.body.classList.remove('flash');
-
         orbitActive = false; // Stop elliptical math loop
 
-        // Setup Grid underlying structure (hidden for now)
-        gridContainer.style.display = 'grid'; // Need it in DOM to calculate targets
+        // Setup Grid underlying structure correctly
         gridContainer.innerHTML = '';
-        const targetCells = [];
-
-        for (let i = 0; i < TOTAL_IMAGES; i++) {
-            const d = document.createElement('div');
-            d.className = 'card';
-            d.innerHTML = `<img src="${imgSource}" alt="Competition" /><div class="card-label">AAYAM '26</div>`;
-            gridContainer.appendChild(d);
-            targetCells.push(d);
+        for (let i = 0; i < 16; i++) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <img src="${imgSource}" alt="Competition ${i + 1}" />
+              <div class="card-label">Competition ${i + 1}</div>
+            `;
+            gridContainer.appendChild(card);
         }
+        gridContainer.style.display = 'grid'; // Need it briefly rendered to calculate targets
 
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
+        const targetCells = gridContainer.querySelectorAll('.card');
 
         // Physics flyout
-        orbitingItems.forEach((item, index) => {
-            // Screen coords
-            const startX = cx + item.x;
-            const startY = cy + item.y;
+        allOrbitingElements.forEach((item, index) => {
+            // Screen coords exactly where loop left them
+            const startX = item._x;
+            const startY = item._y;
 
             // Get target cell coords
             const targetRect = targetCells[index].getBoundingClientRect();
@@ -239,13 +171,12 @@ function executeBurstSequence() {
             const targetX = targetRect.left + targetRect.width / 2;
             const targetY = targetRect.top + targetRect.height / 2;
 
-            // Render a flyout item
+            // Render a flyout item for animation
             const fly = document.createElement('img');
             fly.src = imgSource;
             fly.className = 'flyout-item';
 
-            // Ensure flyout item starts centered exactly on the relative startX/Y
-            // We'll set absolute top/left to 0 and use transform exclusively.
+            // Adjust to be center transform based
             fly.style.top = '0px';
             fly.style.left = '0px';
             document.body.appendChild(fly);
@@ -254,10 +185,10 @@ function executeBurstSequence() {
             let currentY = startY;
 
             // Velocity vector pointing from center -> target grid cell
-            const dirX = targetX - cx;
-            const dirY = targetY - cy;
+            const dirX = targetX - startX;
+            const dirY = targetY - startY;
 
-            // Initial Velocity
+            // Initial Velocity kick outward
             let velX = dirX * 0.15;
             let velY = dirY * 0.15;
 
@@ -287,25 +218,33 @@ function executeBurstSequence() {
             requestAnimationFrame(flyStep);
 
             // Hide the original math orbiter
-            item.el.style.display = 'none';
+            item.style.display = 'none';
         });
 
     }, 1100);
 
-    // Step 4: 4x4 Grid Display (1600ms onwards)
+    // Step 3: 4x4 Grid Display (1600ms onwards)
     setTimeout(() => {
-        // Hide entire atom scene permanently
-        scene.style.display = 'none';
-
         // Remove any lingering flyout clones
         document.querySelectorAll('.flyout-item').forEach(f => f.remove());
 
-        // Staggered Pop-in
+        // Hide entire atom scene permanently
+        scene.style.display = 'none';
+        document.getElementById('atom-container').style.display = 'none';
+
+        // When showing the grid:
+        document.body.classList.add('grid-active');
+        document.body.style.overflow = 'auto'; // fallback
+
+        // Scroll to top when grid appears
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Staggered card pop-in
         const cards = document.querySelectorAll('.competition-grid .card');
         cards.forEach((card, i) => {
             setTimeout(() => {
                 card.style.transform = 'scale(1)';
-            }, i * 50); // 50ms stagger
+            }, 80 + i * 60); // 60ms stagger, starts 80ms after grid render
         });
 
     }, 1600);
