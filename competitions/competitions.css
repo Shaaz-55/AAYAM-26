@@ -12,8 +12,7 @@
 html {
     overflow-x: hidden;
     overflow-y: auto;
-    /* allow vertical scroll */
-    scroll-behavior: smooth;
+    /* NO scroll-behavior property at all */
 }
 
 body {
@@ -145,17 +144,67 @@ body.grid-active canvas {
     }
 }
 
-@keyframes hint-bob {
+#scroll-hint-bar {
+    position: fixed;
+    /* sticks to viewport — does NOT move when scrolling */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 24px;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+#scroll-hint-text {
+    margin: 0 0 10px 0;
+    font-family: 'Orbitron', 'Space Mono', monospace;
+    font-size: clamp(11px, 1.2vw, 15px);
+    /* responsive — smaller on mobile */
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.3em;
+    text-transform: lowercase;
+    animation: hint-pulse 2.5s ease-in-out infinite;
+    user-select: none;
+}
+
+#scroll-progress-bar {
+    width: 120px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 1px;
+    overflow: hidden;
+    position: relative;
+}
+
+#scroll-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--scroll-pct, 0%);
+    /* driven by JS */
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 1px;
+    transition: width 0.1s linear;
+}
+
+@keyframes hint-pulse {
 
     0%,
     100% {
-        transform: translateX(-50%) translateY(0);
-        opacity: 0.35;
+        opacity: 0.45;
+        transform: translateY(0);
     }
 
     50% {
-        transform: translateX(-50%) translateY(6px);
-        opacity: 0.6;
+        opacity: 0.75;
+        transform: translateY(-4px);
     }
 }
 
@@ -190,13 +239,15 @@ body.grid-active canvas {
     left: 0;
     width: 60px;
     height: 60px;
-    border-radius: 12px;
-    object-fit: cover;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
     will-change: transform, opacity;
-    transform-origin: center center;
+    /* tells GPU to prepare these layers */
+    transform: translateZ(0);
+    /* force GPU compositing layer */
+    backface-visibility: hidden;
+    /* eliminate paint flicker */
     pointer-events: none;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
 /* Burst / Flyout items */

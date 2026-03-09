@@ -28,21 +28,11 @@
         <div class="atom-container" id="atom-container">
             <!-- Central Nucleus -->
             <div id="nucleus" class="nucleus"></div>
-            <!-- Scroll hint -->
-            <div id="scroll-hint" style="
-              position: fixed;
-              bottom: 32px;
-              left: 50%;
-              transform: translateX(-50%);
-              color: rgba(255,255,255,0.35);
-              font-family: 'Orbitron', sans-serif;
-              font-size: 11px;
-              letter-spacing: 0.2em;
-              text-transform: uppercase;
-              animation: hint-bob 2s ease-in-out infinite;
-              z-index: 20;
-              pointer-events: none;
-            ">↓ scroll to reveal ↓</div>
+            <!-- Scroll hint bar (Sticky bottom) -->
+            <div id="scroll-hint-bar">
+                <h1 id="scroll-hint-text">scroll to know more</h1>
+                <div id="scroll-progress-bar"></div>
+            </div>
         </div>
     </div>
 

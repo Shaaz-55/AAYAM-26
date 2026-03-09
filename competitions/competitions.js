@@ -59,7 +59,7 @@ const rings = [
         rx: 320,
         ry: 95,
         tiltDeg: 45,
-        speed: 0.008,
+        speed: 0.024,
         direction: 1,
         baseAngle: 0
     },
@@ -68,7 +68,7 @@ const rings = [
         rx: 320,
         ry: 95,
         tiltDeg: -45,
-        speed: 0.008,
+        speed: 0.024,
         direction: -1,
         baseAngle: 0
     }
@@ -78,6 +78,9 @@ let globalSpeedMultiplier = 1;
 let orbitActive = true;
 let orbitRAF;
 let allOrbitingElements = [...itemsGroupA, ...itemsGroupB];
+
+let targetGlowIntensity = 0;
+let currentGlowIntensity = 0;
 
 function getNucleusCenter() {
     const rect = nucleus.getBoundingClientRect();
@@ -121,6 +124,10 @@ setTimeout(positionRingLines, 50);
 // The main 3D illusion loop
 function updateOrbits() {
     if (!orbitActive) return;
+
+    // Smoothly lerp glow toward target (0.08 = smooth easing factor)
+    currentGlowIntensity += (targetGlowIntensity - currentGlowIntensity) * 0.08;
+    updateNucleusGlow(currentGlowIntensity);
 
     const { x: cx, y: cy } = getNucleusCenter();
 
@@ -169,42 +176,41 @@ updateOrbits();
 
 let burstTriggered = false;
 let scrollProgress = 0;
+let scrollTicking = false;
 
 window.addEventListener('scroll', () => {
-    if (burstTriggered) return; // don't process scroll after burst
+    if (burstTriggered) return;
+    if (scrollTicking) return; // skip if already queued for this frame
 
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    scrollProgress = Math.min(scrollTop / Math.max(maxScroll, 1), 1); // 0.0 to 1.0
+    scrollTicking = true;
+    requestAnimationFrame(() => {
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        if (maxScroll <= 0) { scrollTicking = false; return; }
 
-    // Fade scroll hint
-    const hint = document.getElementById('scroll-hint');
-    if (hint) {
-        hint.style.opacity = Math.max(0, 0.35 - scrollProgress * 3);
-    }
+        scrollProgress = Math.min(scrollTop / maxScroll, 1);
 
-    // GUARD: if page isn't actually scrollable yet, skip
-    if (maxScroll <= 0) return;
+        // Update thin progress bar
+        const progressBar = document.getElementById('scroll-progress-bar');
+        if (progressBar) {
+            progressBar.style.setProperty('--scroll-pct', (scrollProgress * 100) + '%');
+        }
 
-    if (scrollProgress < 0.70) {
-        // Phase 1: speed up orbit proportionally
-        // goes from 1x at 0% scroll to 15x at 70% scroll
-        globalSpeedMultiplier = 1 + (scrollProgress / 0.70) * 14;
+        if (scrollProgress < 0.70) {
+            globalSpeedMultiplier = 1 + Math.pow(scrollProgress / 0.70, 1.8) * 28;
+            targetGlowIntensity = scrollProgress / 0.70;
 
-        // Scale up glow on nucleus as speed increases
-        const glowIntensity = scrollProgress / 0.70; // 0 to 1
-        updateNucleusGlow(glowIntensity);
+        } else if (scrollProgress < 0.90) {
+            globalSpeedMultiplier = 35;
+            targetGlowIntensity = 1;
 
-    } else if (scrollProgress < 0.90) {
-        // Phase 2: max speed — frantic spinning
-        globalSpeedMultiplier = 15;
-        updateNucleusGlow(1);
+        } else if (!burstTriggered) {
+            burstTriggered = true;
+            triggerBurst();
+        }
 
-    } else if (!burstTriggered) {
-        // Phase 3: TRIGGER BURST
-        burstTriggered = true;
-        triggerBurst();
-    }
+        scrollTicking = false;
+    });
 });
 
 function updateNucleusGlow(intensity) {
@@ -222,7 +228,14 @@ function updateNucleusGlow(intensity) {
 
 function triggerBurst() {
     // Step A: Keep spinning at max speed for 600ms (visual climax)
-    globalSpeedMultiplier = 20;
+    globalSpeedMultiplier = 45;
+
+    // Fade out the entire hint bar
+    const hintBar = document.getElementById('scroll-hint-bar');
+    if (hintBar) {
+        hintBar.style.opacity = '0';
+        setTimeout(() => { hintBar.style.display = 'none'; }, 400);
+    }
 
     // Step B: After 600ms, scatter items to grid positions
     setTimeout(() => {
