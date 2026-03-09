@@ -1,4 +1,4 @@
-console.log("Atomic Competitions - Math Orbit Engine");
+console.log("Atomic Competitions - Math Orbit & Scroll Engine");
 
 // --- BACKGROUND GRAIN ---
 const bgCanvas = document.getElementById('bg-canvas');
@@ -25,64 +25,104 @@ window.addEventListener('resize', resizeBgCanvas);
 resizeBgCanvas();
 
 // --- SETUP MATH ORBITS ---
-const orbitsContainer = document.getElementById('orbits-container');
+const orbitContainer = document.getElementById('orbit-container');
 const scene = document.getElementById('scene');
 const nucleus = document.getElementById('nucleus');
 const gridContainer = document.getElementById('grid-container');
 
-const imgSource = "doggy.png";
+const IMG_SRC = "doggy.png"; // Fix 3: One source of truth for images
+const ITEM_SIZE = 60; // 60px width/height
 
 let itemsGroupA = [];
 let itemsGroupB = [];
 
 for (let i = 0; i < 8; i++) {
     const el = document.createElement('img');
-    el.src = imgSource;
-    el.className = 'math-orbiter';
-    orbitsContainer.appendChild(el);
+    el.src = IMG_SRC;
+    el.className = 'orbit-item';
+    orbitContainer.appendChild(el);
     itemsGroupA.push(el);
 }
 
 for (let i = 0; i < 8; i++) {
     const el = document.createElement('img');
-    el.src = imgSource;
-    el.className = 'math-orbiter';
-    orbitsContainer.appendChild(el);
+    el.src = IMG_SRC;
+    el.className = 'orbit-item';
+    orbitContainer.appendChild(el);
     itemsGroupB.push(el);
 }
 
 // ---- ORBITAL CONFIGURATION ----
 const rings = [
     {
-        items: itemsGroupA,          // first 8 image elements
-        rx: 320,                     // horizontal radius
-        ry: 95,                      // vertical radius (squashed = 3D illusion)
-        tiltDeg: 45,                 // CSS rotation of the orbital plane
-        speed: 0.008,                // radians per frame
-        direction: 1,                // 1 = clockwise
+        items: itemsGroupA,
+        rx: 320,
+        ry: 95,
+        tiltDeg: 45,
+        speed: 0.008,
+        direction: 1,
         baseAngle: 0
     },
     {
-        items: itemsGroupB,          // second 8 image elements
+        items: itemsGroupB,
         rx: 320,
         ry: 95,
-        tiltDeg: -45,                // opposite tilt
+        tiltDeg: -45,
         speed: 0.008,
-        direction: -1,               // -1 = counter-clockwise
+        direction: -1,
         baseAngle: 0
     }
 ];
 
 let globalSpeedMultiplier = 1;
 let orbitActive = true;
+let orbitRAF;
 let allOrbitingElements = [...itemsGroupA, ...itemsGroupB];
 
+function getNucleusCenter() {
+    const rect = nucleus.getBoundingClientRect();
+    return {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+    };
+}
+
+// Run this once on load AND on window resize
+function positionRingLines() {
+    const { x: cx, y: cy } = getNucleusCenter();
+
+    const ringA = document.getElementById('ring-line-a');
+    const ringB = document.getElementById('ring-line-b');
+
+    const rw = 640; // rx * 2
+    const rh = 190; // ry * 2
+
+    [ringA, ringB].forEach(ring => {
+        if (!ring) return;
+        ring.style.position = 'fixed';
+        ring.style.width = rw + 'px';
+        ring.style.height = rh + 'px';
+        ring.style.left = (cx - rw / 2) + 'px';
+        ring.style.top = (cy - rh / 2) + 'px';
+        ring.style.borderRadius = '50%';
+        ring.style.border = '1px solid rgba(255,255,255,0.15)';
+        ring.style.pointerEvents = 'none';
+        ring.style.zIndex = '50';
+    });
+
+    if (ringA) ringA.style.transform = 'rotate(45deg)';
+    if (ringB) ringB.style.transform = 'rotate(-45deg)';
+}
+
+window.addEventListener('resize', positionRingLines);
+// Give a small delay to ensure CSS has applied layout before measuring nucleus
+setTimeout(positionRingLines, 50);
+
 // The main 3D illusion loop
-function animateOrbits() {
+function updateOrbits() {
     if (!orbitActive) return;
 
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    const { x: cx, y: cy } = getNucleusCenter();
 
     rings.forEach(ring => {
         ring.items.forEach((item, i) => {
@@ -98,154 +138,219 @@ function animateOrbits() {
             const x = rawX * Math.cos(tiltRad) - rawY * Math.sin(tiltRad);
             const y = rawX * Math.sin(tiltRad) + rawY * Math.cos(tiltRad);
 
-            // Depth effect: items at back are smaller and more transparent
+            // Depth effect
             const depth = Math.sin(theta);  // -1 (back) to +1 (front)
-            const scale = 0.6 + 0.4 * ((depth + 1) / 2);
-            const opacity = 0.45 + 0.55 * ((depth + 1) / 2);
+            const scale = 0.55 + 0.45 * ((depth + 1) / 2);
+
+            // Adjust opacity explicitly based on phase or just let it breathe naturally
+            const opacity = 0.4 + 0.6 * ((depth + 1) / 2);
             const zIndex = Math.round(depth * 10) + 10;
 
-            // Center coordinates of the nucleus
-            item.style.transform = `translate(${centerX + x}px, ${centerY + y}px) scale(${scale})`;
+            // CORRECT: translate from (0,0) top-left of viewport TO the item's final position
+            // Subtract half the item's own size
+            const finalX = cx + x - (ITEM_SIZE / 2);
+            const finalY = cy + y - (ITEM_SIZE / 2);
+
+            item.style.transform = `translate(${finalX}px, ${finalY}px) scale(${scale})`;
             item.style.opacity = opacity;
             item.style.zIndex = zIndex;
-            item.style.position = 'fixed'; // Must be fixed to stay bound to viewport exactly
-
-            // Save absolute relative position for the flyout calculation later
-            item._x = centerX + x;
-            item._y = centerY + y;
         });
         ring.baseAngle += ring.speed * globalSpeedMultiplier;
     });
 
-    requestAnimationFrame(animateOrbits);
+    orbitRAF = requestAnimationFrame(updateOrbits);
 }
 
 // Start loop
-animateOrbits();
+updateOrbits();
 
 
-// --- INTERACTION & SEQUENCE ---
+// --- SCROLL INTERACTION & SEQUENCE ---
 
-let sequenceState = 'idle';
+let burstTriggered = false;
+let scrollProgress = 0;
 
-nucleus.addEventListener('click', () => {
-    if (sequenceState !== 'idle') return;
-    executeBurstSequence();
+window.addEventListener('scroll', () => {
+    if (burstTriggered) return; // don't process scroll after burst
+
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    scrollProgress = Math.min(scrollTop / Math.max(maxScroll, 1), 1); // 0.0 to 1.0
+
+    // Fade scroll hint
+    const hint = document.getElementById('scroll-hint');
+    if (hint) {
+        hint.style.opacity = Math.max(0, 0.35 - scrollProgress * 3);
+    }
+
+    // GUARD: if page isn't actually scrollable yet, skip
+    if (maxScroll <= 0) return;
+
+    if (scrollProgress < 0.70) {
+        // Phase 1: speed up orbit proportionally
+        // goes from 1x at 0% scroll to 15x at 70% scroll
+        globalSpeedMultiplier = 1 + (scrollProgress / 0.70) * 14;
+
+        // Scale up glow on nucleus as speed increases
+        const glowIntensity = scrollProgress / 0.70; // 0 to 1
+        updateNucleusGlow(glowIntensity);
+
+    } else if (scrollProgress < 0.90) {
+        // Phase 2: max speed — frantic spinning
+        globalSpeedMultiplier = 15;
+        updateNucleusGlow(1);
+
+    } else if (!burstTriggered) {
+        // Phase 3: TRIGGER BURST
+        burstTriggered = true;
+        triggerBurst();
+    }
 });
 
-function executeBurstSequence() {
-    sequenceState = 'running';
+function updateNucleusGlow(intensity) {
+    // intensity: 0 to 1
+    const baseGlow = 40;
+    const maxGlow = 120;
+    const spread = baseGlow + (maxGlow - baseGlow) * intensity;
+    nucleus.style.boxShadow = `
+        0 0 ${spread}px ${spread * 0.3}px rgba(255,255,255,${0.15 + 0.35 * intensity}),
+        0 0 ${spread * 2}px ${spread * 0.6}px rgba(180,200,255,${0.08 + 0.15 * intensity}),
+        inset 10px 10px 20px rgba(255, 255, 255, 0.2),
+        inset -10px -10px 20px rgba(0, 0, 0, 0.8)
+    `;
+}
 
-    // Step 1: Acceleration Phase (0ms to 700ms)
-    globalSpeedMultiplier = 5; // Speed up dramatically instantly
-    nucleus.classList.add('accelerated');
+function triggerBurst() {
+    // Step A: Keep spinning at max speed for 600ms (visual climax)
+    globalSpeedMultiplier = 20;
 
-    // Step 2: Burst & Scatter (1100ms - 1600ms)
+    // Step B: After 600ms, scatter items to grid positions
     setTimeout(() => {
-        orbitActive = false; // Stop elliptical math loop
+        scatterToGrid();
+    }, 600);
+}
 
-        // Setup Grid underlying structure correctly
-        gridContainer.innerHTML = '';
-        for (let i = 0; i < 16; i++) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-              <img src="${imgSource}" alt="Competition ${i + 1}" />
-              <div class="card-label">Competition ${i + 1}</div>
-            `;
-            gridContainer.appendChild(card);
+function computeGridPositions() {
+    const cols = 4;
+    const rows = 4;
+    const gap = 28;
+    // We want the grid to match the 1300px max width and center it
+    const maxWidth = Math.min(1300, window.innerWidth * 0.92);
+    // Left padding to center the 1300px (or 92vw) container
+    const sidePadding = (window.innerWidth - maxWidth) / 2;
+
+    const totalWidth = maxWidth;
+    const cardWidth = Math.max(0, (totalWidth - gap * (cols - 1)) / cols);
+    const cardHeight = cardWidth * (4 / 3); // portrait ratio
+
+    const positions = [];
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            positions.push({
+                x: sidePadding + c * (cardWidth + gap),
+                y: 80 + r * (cardHeight + gap),  // 80px top margin
+                width: cardWidth,
+                height: cardHeight
+            });
         }
-        gridContainer.style.display = 'grid'; // Need it briefly rendered to calculate targets
+    }
+    return positions;
+}
 
-        const targetCells = gridContainer.querySelectorAll('.card');
+function scatterToGrid() {
+    // Stop the rAF orbit loop
+    orbitActive = false;
+    cancelAnimationFrame(orbitRAF);
 
-        // Physics flyout
-        allOrbitingElements.forEach((item, index) => {
-            // Screen coords exactly where loop left them
-            const startX = item._x;
-            const startY = item._y;
+    // RESET SCROLL TO TOP FIRST so viewport Y = document Y (Fix 5)
+    window.scrollTo({ top: 0, behavior: 'instant' });
 
-            // Get target cell coords
-            const targetRect = targetCells[index].getBoundingClientRect();
-            // Centered target relative to window
-            const targetX = targetRect.left + targetRect.width / 2;
-            const targetY = targetRect.top + targetRect.height / 2;
+    // Calculate where the 16 grid cells will be
+    const gridPositions = computeGridPositions();
 
-            // Render a flyout item for animation
-            const fly = document.createElement('img');
-            fly.src = imgSource;
-            fly.className = 'flyout-item';
+    const items = [...document.querySelectorAll('.orbit-item')];
 
-            // Adjust to be center transform based
-            fly.style.top = '0px';
-            fly.style.left = '0px';
-            document.body.appendChild(fly);
+    items.forEach((item, i) => {
+        const target = gridPositions[i];
 
-            let currentX = startX;
-            let currentY = startY;
+        // Get current position from transform
+        const currentRect = item.getBoundingClientRect();
+        const startX = currentRect.left;
+        const startY = currentRect.top;
 
-            // Velocity vector pointing from center -> target grid cell
-            const dirX = targetX - startX;
-            const dirY = targetY - startY;
+        // Reset transform to 0 so we translate directly
+        // because we are calculating exact window coordinates.
+        // Wait, the item has `position: fixed; top:0; left:0; width:60px`.
+        // Translating to target.x, target.y directly works since top/left is 0.
 
-            // Initial Velocity kick outward
-            let velX = dirX * 0.15;
-            let velY = dirY * 0.15;
+        item.style.transition = `transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                                  opacity 0.7s ease,
+                                  width 0.7s ease,
+                                  height 0.7s ease,
+                                  border-radius 0.7s ease`;
+        item.style.width = target.width + 'px';
+        item.style.height = target.height + 'px';
+        item.style.transform = `translate(${target.x}px, ${target.y}px) scale(1)`;
+        item.style.opacity = '1';
+        item.style.zIndex = '1000';
+        item.style.borderRadius = '16px';
+        item.style.border = '1px solid rgba(255,255,255,0.2)';
+        item.style.pointerEvents = 'auto';
+        item.style.overflow = 'hidden';
+    });
 
-            let blur = 6;
-
-            function flyStep() {
-                // Easing deceleration (velocity *= 0.88 each frame)
-                velX *= 0.88;
-                velY *= 0.88;
-
-                currentX += velX;
-                currentY += velY;
-
-                blur *= 0.88; // fade blur
-
-                fly.style.transform = `translate(${currentX}px, ${currentY}px)`;
-                fly.style.filter = `blur(${Math.max(0, Math.floor(blur))}px)`;
-
-                // Stop when velocity is very low
-                if (Math.abs(velX) > 0.1 || Math.abs(velY) > 0.1) {
-                    requestAnimationFrame(flyStep);
-                } else {
-                    // Snap exactly to target cell center to avoid any sub-pixel drift
-                    fly.style.transform = `translate(${targetX}px, ${targetY}px)`;
-                }
-            }
-            requestAnimationFrame(flyStep);
-
-            // Hide the original math orbiter
-            item.style.display = 'none';
-        });
-
-    }, 1100);
-
-    // Step 3: 4x4 Grid Display (1600ms onwards)
+    // After animation completes, switch to proper scrollable grid
     setTimeout(() => {
-        // Remove any lingering flyout clones
-        document.querySelectorAll('.flyout-item').forEach(f => f.remove());
+        showFinalGrid();
+    }, 900);
+}
 
-        // Hide entire atom scene permanently
-        scene.style.display = 'none';
-        document.getElementById('atom-container').style.display = 'none';
+function showFinalGrid() {
+    // Hide atom scene completely
+    document.getElementById('scene').style.display = 'none';
+    document.getElementById('scroll-track').style.display = 'none';
+    // DO NOT hide orbit-container here, items are still mid-flight! (Fix 4)
 
-        // When showing the grid:
-        document.body.classList.add('grid-active');
-        document.body.style.overflow = 'auto'; // fallback
+    // Switch body to normal scroll mode
+    document.body.classList.add('grid-active');
+    document.body.style.overflow = 'auto';
+    document.body.style.overflowX = 'hidden';
 
-        // Scroll to top when grid appears
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Build and show the grid
+    const grid = document.getElementById('grid-container');
+    grid.innerHTML = '';
+    for (let i = 0; i < 16; i++) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.transform = 'scale(0)';
+        card.innerHTML = `
+          <img src="${IMG_SRC}" alt="Competition ${i + 1}" />
+          <div class="card-label">Competition ${i + 1}</div>
+        `;
+        grid.appendChild(card);
+    }
 
-        // Staggered card pop-in
-        const cards = document.querySelectorAll('.competition-grid .card');
-        cards.forEach((card, i) => {
-            setTimeout(() => {
-                card.style.transform = 'scale(1)';
-            }, 80 + i * 60); // 60ms stagger, starts 80ms after grid render
-        });
+    grid.style.display = 'grid';
+    // Remove fixed position on grid container to allow normal scrolling
+    grid.style.position = 'relative';
+    grid.style.transform = 'none';
+    grid.style.top = 'auto';
+    grid.style.left = 'auto';
 
-    }, 1600);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    // Staggered pop-in
+    const cards = grid.querySelectorAll('.card');
+    cards.forEach((card, i) => {
+        setTimeout(() => {
+            card.style.transform = 'scale(1)';
+        }, 80 + i * 55);
+    });
+
+    // Hide orbit-container AFTER all cards have popped in (Fix 4)
+    const totalPopInTime = 80 + 15 * 55 + 500; // last card delay + card transition duration
+    setTimeout(() => {
+        const oc = document.getElementById('orbit-container');
+        if (oc) oc.style.display = 'none';
+    }, totalPopInTime);
 }

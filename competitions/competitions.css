@@ -9,12 +9,21 @@
     padding: 0;
 }
 
-body,
 html {
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg-color);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* allow vertical scroll */
+    scroll-behavior: smooth;
+}
+
+body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* MUST be auto or scroll — NOT hidden */
+    margin: 0;
+    padding: 0;
+    background: #000;
+    min-height: 100vh;
     color: white;
     user-select: none;
     font-family: sans-serif;
@@ -47,16 +56,17 @@ body::before {
 
 
 /* Main Scene */
-.scene {
-    position: absolute;
+#scene {
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10;
+    z-index: 1;
+    pointer-events: none;
 }
 
 /* When grid is active, switch the page to scroll mode */
@@ -70,6 +80,8 @@ body.grid-active {
 /* The atom scene must be completely hidden when grid is active */
 body.grid-active #scene,
 body.grid-active .atom-container,
+body.grid-active #orbit-container,
+body.grid-active #scroll-track,
 body.grid-active canvas {
     display: none !important;
 }
@@ -102,6 +114,7 @@ body.grid-active canvas {
     z-index: 100;
     /* Will sit above items with z-index < 100 and below > 100 */
     animation: nucleus-pulse 4s ease-in-out infinite alternate;
+    pointer-events: auto;
 }
 
 .nucleus:hover {
@@ -132,6 +145,20 @@ body.grid-active canvas {
     }
 }
 
+@keyframes hint-bob {
+
+    0%,
+    100% {
+        transform: translateX(-50%) translateY(0);
+        opacity: 0.35;
+    }
+
+    50% {
+        transform: translateX(-50%) translateY(6px);
+        opacity: 0.6;
+    }
+}
+
 /* Orbiting Image Elements */
 .orbit-group {
     position: absolute;
@@ -140,21 +167,12 @@ body.grid-active canvas {
 }
 
 .orbit-line {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 640px;
-    /* rx * 2 */
-    height: 190px;
-    /* ry * 2 */
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    /* Style handled mostly in JS now */
     border-radius: 50%;
-    /* Center the line */
-    margin-left: -320px;
-    margin-top: -95px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    pointer-events: none;
     z-index: 50;
     /* Behind front items */
-    pointer-events: none;
 }
 
 .ring-a {
@@ -166,18 +184,19 @@ body.grid-active canvas {
 }
 
 
-.math-orbiter {
-    position: absolute;
+.orbit-item {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 60px;
     height: 60px;
-    margin-left: -30px;
-    /* Center align */
-    margin-top: -30px;
     border-radius: 12px;
     object-fit: cover;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.3);
     will-change: transform, opacity;
+    transform-origin: center center;
+    pointer-events: none;
 }
 
 /* Burst / Flyout items */
@@ -198,19 +217,15 @@ body.grid-active canvas {
 
 /* EXACT GRID CSS FROM BRIEF */
 .competition-grid {
-    display: grid;
+    display: none;
+    /* hidden by default, shown by JS */
     grid-template-columns: repeat(4, 1fr);
     gap: 28px;
-    /* generous gap between cards */
     width: min(1300px, 92vw);
-    /* max width, centered */
     margin: 60px auto 80px auto;
-    /* top and bottom breathing room */
     padding: 0 16px;
     box-sizing: border-box;
-    position: relative;
-    /* NOT fixed — so it can scroll */
-    z-index: 1000;
+    /* NO position, NO transform, NO top, NO left — let JS control these */
 }
 
 .competition-grid .card {

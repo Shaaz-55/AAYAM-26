@@ -14,6 +14,11 @@
 </head>
 
 <body>
+    <!-- Scroll track to allow the page to scroll to 400vh -->
+    <div id="scroll-track"
+        style="height: 400vh; width: 1px; position: relative; background: transparent; z-index: 0; pointer-events: none;">
+    </div>
+
     <!-- Background Canvas for Grain/Noise -->
     <canvas id="bg-canvas"></canvas>
 
@@ -23,13 +28,37 @@
         <div class="atom-container" id="atom-container">
             <!-- Central Nucleus -->
             <div id="nucleus" class="nucleus"></div>
-
-            <!-- Orbits container for JS injection of images -->
-            <div id="orbits-container" class="orbit-group">
-                <div class="orbit-line ring-a"></div>
-                <div class="orbit-line ring-b"></div>
-            </div>
+            <!-- Scroll hint -->
+            <div id="scroll-hint" style="
+              position: fixed;
+              bottom: 32px;
+              left: 50%;
+              transform: translateX(-50%);
+              color: rgba(255,255,255,0.35);
+              font-family: 'Orbitron', sans-serif;
+              font-size: 11px;
+              letter-spacing: 0.2em;
+              text-transform: uppercase;
+              animation: hint-bob 2s ease-in-out infinite;
+              z-index: 20;
+              pointer-events: none;
+            ">↓ scroll to reveal ↓</div>
         </div>
+    </div>
+
+    <!-- Orbits container for JS injection of images (Full viewport fixed overlay) -->
+    <div id="orbit-container" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 5;
+      overflow: visible;
+    ">
+        <div id="ring-line-a" class="orbit-line"></div>
+        <div id="ring-line-b" class="orbit-line"></div>
     </div>
 
     <!-- Final 4x4 Grid Container (Hidden initially) -->
