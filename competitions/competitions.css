@@ -1,0 +1,295 @@
+:root {
+    --bg-color: #000000;
+    --nucleus-color: #050508;
+    --orbit-size: 80vmin;
+    --img-size: 60px;
+    /* Size of orbiting images */
+    --global-speed-scale: 1;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body,
+html {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    overflow: hidden;
+    color: white;
+    user-select: none;
+    font-family: sans-serif;
+}
+
+/* Background Canvas */
+#bg-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Ambient Center Glow */
+body::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100vw;
+    height: 100vh;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(40, 30, 80, 0.15) 0%, rgba(0, 0, 0, 0) 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Main 3D Scene */
+.scene {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1200px;
+    z-index: 10;
+}
+
+.atom-container {
+    position: relative;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+}
+
+/* Nucleus */
+.nucleus {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 25vmin;
+    height: 25vmin;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle at 30% 30%, #222, var(--nucleus-color) 70%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow:
+        inset 10px 10px 20px rgba(255, 255, 255, 0.2),
+        inset -10px -10px 20px rgba(0, 0, 0, 0.8),
+        0 0 40px 10px rgba(255, 255, 255, 0.15),
+        0 0 80px 30px rgba(180, 200, 255, 0.10),
+        0 0 160px 60px rgba(100, 150, 255, 0.06);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+    z-index: 100;
+    animation: nucleus-pulse 4s ease-in-out infinite alternate;
+    will-change: transform, box-shadow;
+}
+
+.nucleus:hover {
+    transform: translate(-50%, -50%) scale(1.05);
+}
+
+.nucleus.accelerated {
+    animation: nucleus-pulse 0.3s ease-in-out infinite alternate !important;
+}
+
+@keyframes nucleus-pulse {
+    0% {
+        box-shadow:
+            inset 10px 10px 20px rgba(255, 255, 255, 0.2),
+            inset -10px -10px 20px rgba(0, 0, 0, 0.8),
+            0 0 30px 5px rgba(255, 255, 255, 0.1),
+            0 0 60px 20px rgba(180, 200, 255, 0.08),
+            0 0 120px 40px rgba(100, 150, 255, 0.04);
+    }
+
+    100% {
+        box-shadow:
+            inset 10px 10px 30px rgba(255, 255, 255, 0.4),
+            inset -10px -10px 20px rgba(0, 0, 0, 0.8),
+            0 0 50px 15px rgba(255, 255, 255, 0.25),
+            0 0 100px 40px rgba(180, 200, 255, 0.15),
+            0 0 200px 80px rgba(100, 150, 255, 0.08);
+    }
+}
+
+/* Orbits */
+.orbit-group {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-style: preserve-3d;
+}
+
+.orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--orbit-size);
+    height: var(--orbit-size);
+    margin-left: calc(var(--orbit-size) / -2);
+    margin-top: calc(var(--orbit-size) / -2);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transform-style: preserve-3d;
+    transform: rotateY(var(--rotation-y)) rotateX(var(--rotation-x));
+}
+
+.orbit.accelerated {
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.orbit-inner {
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    animation: orbit-spin calc(var(--duration) * var(--global-speed-scale)) linear infinite;
+    will-change: transform;
+}
+
+@keyframes orbit-spin {
+    0% {
+        transform: rotateZ(0deg);
+    }
+
+    100% {
+        transform: rotateZ(360deg);
+    }
+}
+
+/* Orbiting Image Wrapper */
+.orbiting-img-wrapper {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: var(--img-size);
+    height: var(--img-size);
+    /* Counter-rotate to stay upright relative to camera */
+    transform-style: preserve-3d;
+    transform: translate(-50%, -50%) rotateZ(0deg) rotateX(calc(var(--rotation-x) * -1)) rotateY(calc(var(--rotation-y) * -1));
+    animation: counter-spin calc(var(--duration) * var(--global-speed-scale)) linear infinite;
+    will-change: transform;
+}
+
+@keyframes counter-spin {
+    0% {
+        transform: translate(-50%, -50%) rotateZ(0deg) rotateX(calc(var(--rotation-x) * -1)) rotateY(calc(var(--rotation-y) * -1));
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(calc(var(--rotation-x) * -1)) rotateY(calc(var(--rotation-y) * -1));
+    }
+}
+
+.orbiting-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Grid Container Phase (4x4) */
+.hidden {
+    display: none !important;
+}
+
+.grid-container {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 20px;
+    padding: 60px;
+    max-width: 1000px;
+    max-height: 1000px;
+    margin: auto;
+    z-index: 30;
+}
+
+.grid-item {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    /* JS handles reveal */
+    transform: scale(0.8);
+}
+
+.grid-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+}
+
+.grid-item:hover img {
+    transform: scale(1.1);
+}
+
+/* Flying Clone during Burst */
+.flying-clone {
+    position: absolute;
+    margin: 0;
+    width: var(--img-size);
+    height: var(--img-size);
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    z-index: 200;
+    pointer-events: none;
+    will-change: transform, width, height;
+}
+
+/* Reset Button */
+.reset-btn {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 40;
+    transition: color 0.2s, text-shadow 0.2s;
+    pointer-events: auto;
+}
+
+.reset-btn:hover {
+    color: white;
+    text-shadow: 0 0 10px white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    :root {
+        --orbit-size: 90vmin;
+        --img-size: 40px;
+    }
+
+    .grid-container {
+        padding: 20px;
+        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+        /* 2x8 on mobile for better fit */
+        grid-template-rows: repeat(8, 1fr);
+    }
+}
