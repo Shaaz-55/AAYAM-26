@@ -302,25 +302,147 @@ body.grid-active canvas {
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.competition-grid .card img {
-    width: 100%;
+/* ---- CARD INNER LAYOUT ---- */
+.card-inner {
+    display: flex;
+    flex-direction: column;
     height: 100%;
-    object-fit: cover;
+    padding: 22px 18px 18px 18px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glowing top accent line */
+.card-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+}
+
+/* ---- EMOJI ---- */
+.card-emoji {
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 8px;
     display: block;
 }
 
-/* Optional label overlay at bottom of each card */
-.competition-grid .card .card-label {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 16px 14px 14px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+/* ---- CATEGORY TAG ---- */
+.card-category {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+    font-family: 'Orbitron', 'Space Mono', monospace;
+    margin-bottom: 10px;
+}
+
+/* ---- COMPETITION NAME (h1) ---- */
+.card-title {
+    font-size: clamp(13px, 1.3vw, 18px);
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
     font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.02em;
+    transition: color 0.2s ease;
+}
+
+/* ---- OVERVIEW (p) ---- */
+.card-overview {
+    font-size: clamp(10px, 0.9vw, 12px);
+    color: rgba(255, 255, 255, 0.52);
+    line-height: 1.6;
+    margin: 0 0 auto 0;
+    flex-grow: 1;
+    font-family: 'DM Mono', 'Space Mono', monospace;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    /* Requires vendor prefix in actual css usually for multiline clamp, added above */
+    -webkit-box-orient: vertical;
+}
+
+/* ---- FOOTER AREA ---- */
+.card-footer {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+/* ---- RULEBOOK LINK (a tag) ---- */
+.rulebook-link {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.42);
+    text-decoration: none;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+    transition: color 0.2s ease;
+    white-space: nowrap;
+}
+
+.rulebook-link:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ---- PRIZE (h4) ---- */
+.card-prize {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 220, 80, 0.88);
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+/* ---- REGISTER BUTTON ---- */
+.register-btn {
+    display: block;
+    text-align: center;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.07);
+    color: #ffffff;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
+    cursor: pointer;
+}
+
+.register-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* ---- CARD HOVER — lift + glow ---- */
+#grid-container .card:hover .card-title {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* ---- ENSURE CARDS ARE TALL ENOUGH FOR CONTENT ---- */
+#grid-container .card {
+    min-height: 340px;
 }

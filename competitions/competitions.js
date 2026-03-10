@@ -1,5 +1,136 @@
 console.log("Atomic Competitions - Math Orbit & Scroll Engine");
 
+const competitions = [
+    {
+        name: "Robo Soccer",
+        category: "Robotics",
+        overview: "Build an autonomous robot that scores goals against opponents on a miniature football field. Test your engineering and strategy.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🤖"
+    },
+    {
+        name: "Maze Solver",
+        category: "Robotics",
+        overview: "Design a robot that navigates a complex maze autonomously in the shortest time. Speed, precision, and smart algorithms win.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🧩"
+    },
+    {
+        name: "CAD Modeling",
+        category: "Design",
+        overview: "Showcase your design prowess by creating precise 3D models using CAD software. Judged on accuracy, complexity, and creativity.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "📐"
+    },
+    {
+        name: "Drone Hurdle",
+        category: "Aerial",
+        overview: "Pilot your drone through a series of timed aerial obstacles. Steady hands and sharp reflexes decide the winner.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🚁"
+    },
+    {
+        name: "Rocket Launching",
+        category: "Aerospace",
+        overview: "Engineer and launch a model rocket to a precise altitude target. Points awarded for accuracy, stability, and recovery.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🚀"
+    },
+    {
+        name: "CP Individual",
+        category: "Coding",
+        overview: "Solo competitive programming contest — solve algorithmic challenges under time pressure. Rated for speed and efficiency.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "💻"
+    },
+    {
+        name: "CP Team",
+        category: "Coding",
+        overview: "Team-based competitive programming where strategy and collaboration meet algorithmic problem solving.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🤝"
+    },
+    {
+        name: "Bug Bash",
+        category: "Coding",
+        overview: "Hunt and fix bugs hidden inside complex codebases. The fastest debugger with clean solutions wins.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🐛"
+    },
+    {
+        name: "Codestorm",
+        category: "Coding",
+        overview: "A rapid-fire coding marathon with multiple rounds of increasing difficulty. Only the sharpest coders survive.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🌪️"
+    },
+    {
+        name: "Free Fire",
+        category: "Esports",
+        overview: "Squad-based battle royale tournament. Coordinate with your team, outlast your enemies, and claim the Booyah.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🎮"
+    },
+    {
+        name: "BGMI",
+        category: "Esports",
+        overview: "India's premier mobile battle royale. Squads compete in classic mode for the ultimate chicken dinner.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🔫"
+    },
+    {
+        name: "Smash Karts",
+        category: "Esports",
+        overview: "High-speed kart racing with weapons and chaos. Navigate the arena, smash rivals, and finish first.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🏎️"
+    },
+    {
+        name: "Valorant",
+        category: "Esports",
+        overview: "5v5 tactical shooter with unique agents. Teamwork, precision aim, and game sense are your weapons.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🎯"
+    },
+    {
+        name: "Shark Tank",
+        category: "Business",
+        overview: "Pitch your startup idea to a panel of judges. Get grilled on financials, market fit, and vision. Make them invest.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🦈"
+    },
+    {
+        name: "Photography",
+        category: "Creative",
+        overview: "Capture the theme of the fest through your lens. Judged on composition, lighting, emotion, and technical skill.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "📸"
+    },
+    {
+        name: "Cinematography",
+        category: "Creative",
+        overview: "Create a short film or cinematic reel on a given theme. Storytelling, editing, and cinematographic technique are all scored.",
+        rulebook: "#",
+        prize: "₹20,000",
+        emoji: "🎬"
+    }
+];
+
 // --- BACKGROUND GRAIN ---
 const bgCanvas = document.getElementById('bg-canvas');
 const bgCtx = bgCanvas.getContext('2d');
@@ -332,16 +463,27 @@ function showFinalGrid() {
     // Build and show the grid
     const grid = document.getElementById('grid-container');
     grid.innerHTML = '';
-    for (let i = 0; i < 16; i++) {
+    competitions.forEach((comp, i) => {
         const card = document.createElement('div');
         card.className = 'card';
         card.style.transform = 'scale(0)';
         card.innerHTML = `
-          <img src="${IMG_SRC}" alt="Competition ${i + 1}" />
-          <div class="card-label">Competition ${i + 1}</div>
+          <div class="card-inner">
+            <div class="card-emoji">${comp.emoji || '✨'}</div>
+            <span class="card-category">${comp.category}</span>
+            <h1 class="card-title">${comp.name}</h1>
+            <p class="card-overview">${comp.overview}</p>
+            <div class="card-footer">
+              <div class="card-meta">
+                <a href="${comp.rulebook}" class="rulebook-link" target="_blank">📄 Rulebook</a>
+                <h4 class="card-prize">Prize: ${comp.prize}</h4>
+              </div>
+              <a href="#" class="register-btn">Register</a>
+            </div>
+          </div>
         `;
         grid.appendChild(card);
-    }
+    });
 
     grid.style.display = 'grid';
     // Remove fixed position on grid container to allow normal scrolling
