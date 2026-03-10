@@ -161,24 +161,21 @@ const scene = document.getElementById('scene');
 const nucleus = document.getElementById('nucleus');
 const gridContainer = document.getElementById('grid-container');
 
-const IMG_SRC = "doggy.png"; // Fix 3: One source of truth for images
-const ITEM_SIZE = 60; // 60px width/height
+const ITEM_SIZE = 14; // 14px width/height
 
 let itemsGroupA = [];
 let itemsGroupB = [];
 
 for (let i = 0; i < 8; i++) {
-    const el = document.createElement('img');
-    el.src = IMG_SRC;
-    el.className = 'orbit-item';
+    const el = document.createElement('div');
+    el.className = 'orbit-item electron-dot';
     orbitContainer.appendChild(el);
     itemsGroupA.push(el);
 }
 
 for (let i = 0; i < 8; i++) {
-    const el = document.createElement('img');
-    el.src = IMG_SRC;
-    el.className = 'orbit-item';
+    const el = document.createElement('div');
+    el.className = 'orbit-item electron-dot';
     orbitContainer.appendChild(el);
     itemsGroupB.push(el);
 }
@@ -450,10 +447,13 @@ function scatterToGrid() {
 }
 
 function showFinalGrid() {
-    // Hide atom scene completely
+    // Hide atom scene and scroll track
     document.getElementById('scene').style.display = 'none';
     document.getElementById('scroll-track').style.display = 'none';
-    // DO NOT hide orbit-container here, items are still mid-flight! (Fix 4)
+
+    // Hide orbit-container immediately — scatter is already complete (ran for 900ms before this call)
+    const oc = document.getElementById('orbit-container');
+    if (oc) oc.style.display = 'none';
 
     // Switch body to normal scroll mode
     document.body.classList.add('grid-active');
@@ -502,10 +502,4 @@ function showFinalGrid() {
         }, 80 + i * 55);
     });
 
-    // Hide orbit-container AFTER all cards have popped in (Fix 4)
-    const totalPopInTime = 80 + 15 * 55 + 500; // last card delay + card transition duration
-    setTimeout(() => {
-        const oc = document.getElementById('orbit-container');
-        if (oc) oc.style.display = 'none';
-    }, totalPopInTime);
 }
