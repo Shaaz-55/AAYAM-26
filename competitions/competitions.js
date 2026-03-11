@@ -152,7 +152,7 @@ function drawGrain() {
     }
     bgCtx.putImageData(imgData, 0, 0);
 }
-window.addEventListener('resize', resizeBgCanvas);
+// Resize handled by debounce handler below
 resizeBgCanvas();
 
 // --- SETUP MATH ORBITS ---
@@ -181,11 +181,21 @@ for (let i = 0; i < 8; i++) {
 }
 
 // ---- ORBITAL CONFIGURATION ----
+function getOrbitRadii() {
+    const minDim = Math.min(window.innerWidth, window.innerHeight);
+    return {
+        rx: minDim * 0.38,   // 38% of the smaller viewport dimension
+        ry: minDim * 0.11    // 11% — keeps the squashed ellipse ratio
+    };
+}
+
+let { rx, ry } = getOrbitRadii();
+
 const rings = [
     {
         items: itemsGroupA,
-        rx: 320,
-        ry: 95,
+        rx,
+        ry,
         tiltDeg: 45,
         speed: 0.024,
         direction: 1,
@@ -193,8 +203,8 @@ const rings = [
     },
     {
         items: itemsGroupB,
-        rx: 320,
-        ry: 95,
+        rx,
+        ry,
         tiltDeg: -45,
         speed: 0.024,
         direction: -1,
@@ -225,8 +235,9 @@ function positionRingLines() {
     const ringA = document.getElementById('ring-line-a');
     const ringB = document.getElementById('ring-line-b');
 
-    const rw = 640; // rx * 2
-    const rh = 190; // ry * 2
+    // Use current ring rx/ry instead of hardcoded 640/190
+    const rw = rings[0].rx * 2;
+    const rh = rings[0].ry * 2;
 
     [ringA, ringB].forEach(ring => {
         if (!ring) return;
@@ -245,7 +256,17 @@ function positionRingLines() {
     if (ringB) ringB.style.transform = 'rotate(-45deg)';
 }
 
-window.addEventListener('resize', positionRingLines);
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        resizeBgCanvas();
+        const newRadii = getOrbitRadii();
+        rings[0].rx = rings[1].rx = newRadii.rx;
+        rings[0].ry = rings[1].ry = newRadii.ry;
+        positionRingLines();
+    }, 100);
+});
 // Give a small delay to ensure CSS has applied layout before measuring nucleus
 setTimeout(positionRingLines, 50);
 
