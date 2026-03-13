@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAYAM '26 — Enter Another Realm</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000008;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #space-bg {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, #0a0a1a 0%, #000005 70%);
+      z-index: 0;
+    }
+
+    #button-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #crt-button {
+      position: relative;
+      padding: 22px 52px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #39ff14;
+      color: #39ff14;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(14px, 2vw, 20px);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      overflow: hidden;
+      transform-origin: center center;
+      border-radius: 3px;
+      box-shadow:
+        0 0 8px rgba(57, 255, 20, 0.5),
+        0 0 30px rgba(57, 255, 20, 0.15),
+        inset 0 0 20px rgba(57, 255, 20, 0.04);
+      animation: crt-flicker 6s infinite;
+      user-select: none;
+    }
+
+    #crt-button:hover {
+      box-shadow:
+        0 0 20px rgba(57, 255, 20, 0.9),
+        0 0 60px rgba(57, 255, 20, 0.3),
+        inset 0 0 30px rgba(57, 255, 20, 0.08);
+    }
+
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+          rgba(0, 0, 0, 0.12) 2px, rgba(0, 0, 0, 0.12) 4px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .btn-corner {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-color: #39ff14;
+      border-style: solid;
+    }
+
+    .btn-corner--tl {
+      top: -2px;
+      left: -2px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .btn-corner--tr {
+      top: -2px;
+      right: -2px;
+      border-width: 2px 2px 0 0;
+    }
+
+    .btn-corner--bl {
+      bottom: -2px;
+      left: -2px;
+      border-width: 0 0 2px 2px;
+    }
+
+    .btn-corner--br {
+      bottom: -2px;
+      right: -2px;
+      border-width: 0 2px 2px 0;
+    }
+
+    .glitch-text {
+      position: relative;
+      z-index: 2;
+    }
+
+    .glitch-text::before,
+    .glitch-text::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .glitch-text::before {
+      color: #ff0040;
+      animation: glitch-1 4s infinite;
+      clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    }
+
+    .glitch-text::after {
+      color: #00ffff;
+      animation: glitch-2 4s infinite;
+      clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    }
+
+    @keyframes glitch-1 {
+
+      0%,
+      88%,
+      100% {
+        transform: translate(-2px, 0);
+        opacity: 0;
+      }
+
+      89% {
+        transform: translate(-5px, 1px);
+        opacity: 0.75;
+      }
+
+      91% {
+        transform: translate(3px, -1px);
+        opacity: 0.75;
+      }
+
+      93% {
+        transform: translate(-2px, 0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes glitch-2 {
+
+      0%,
+      88%,
+      100% {
+        transform: translate(2px, 0);
+        opacity: 0;
+      }
+
+      90% {
+        transform: translate(5px, -1px);
+        opacity: 0.75;
+      }
+
+      92% {
+        transform: translate(-3px, 1px);
+        opacity: 0.75;
+      }
+
+      94% {
+        transform: translate(2px, 0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes crt-flicker {
+
+      0%,
+      96%,
+      100% {
+        opacity: 1;
+      }
+
+      96.5% {
+        opacity: 0.82;
+      }
+
+      97% {
+        opacity: 1;
+      }
+
+      97.8% {
+        opacity: 0.88;
+      }
+
+      98% {
+        opacity: 1;
+      }
+    }
+
+    #btn-subtext {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: rgba(57, 255, 20, 0.4);
+      letter-spacing: 0.3em;
+      animation: blink 1.4s step-end infinite;
+      margin: 0;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+    }
+
+    #flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    #watermark {
+      position: fixed;
+      top: 24px;
+      left: 36px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      color: rgba(57, 255, 20, 0.3);
+      letter-spacing: 0.2em;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    #date-badge {
+      position: fixed;
+      top: 24px;
+      right: 36px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: rgba(57, 255, 20, 0.25);
+      letter-spacing: 0.15em;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    #tagline {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.15);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      z-index: 20;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 480px) {
+      #crt-button {
+        padding: 18px 28px;
+        font-size: 13px;
+        letter-spacing: 0.12em;
+      }
+
+      #watermark,
+      #date-badge {
+        font-size: 10px;
+      }
+
+      #tagline {
+        font-size: 9px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="space-bg"></div>
+
+  <div id="watermark">AAYAM '26</div>
+  <div id="date-badge">MARCH 2026</div>
+
+  <div id="button-container">
+    <div id="crt-button" onclick="startSequence()">
+      <div class="scanlines"></div>
+      <div class="glitch-text" data-text="ENTER ANOTHER REALM">ENTER ANOTHER REALM</div>
+      <div class="btn-corner btn-corner--tl"></div>
+      <div class="btn-corner btn-corner--tr"></div>
+      <div class="btn-corner btn-corner--bl"></div>
+      <div class="btn-corner btn-corner--br"></div>
+    </div>
+    <p id="btn-subtext">[ CLICK TO PROCEED ]</p>
+  </div>
+
+  <div id="flash-overlay"></div>
+  <div id="tagline">National Techfest · Beyond the Event Horizon</div>
+
+  <script>
+    // ── STAR DATA ──────────────────────────────────────────────────────────────
+    const STAR_COUNT = 4000;
+    const starPositions = [];
+    const starPrevPositions = [];
+    const starColors = [];
+
+    function initStar(i) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 20 + Math.sqrt(Math.random()) * 400;
+      const z = -(Math.random() * 2000 + 100);
+
+      starPositions[i] = [Math.cos(angle) * radius, Math.sin(angle) * radius, z];
+      starPrevPositions[i] = [...starPositions[i]];
+
+      const roll = Math.random();
+      starColors[i] = roll > 0.85 ? [0.7, 0.8, 1.0]
+        : roll > 0.70 ? [1.0, 0.95, 0.8]
+          : [1.0, 1.0, 1.0];
+    }
+
+    for (let i = 0; i < STAR_COUNT; i++) initStar(i);
+
+    // ── 2D STREAK CANVAS ───────────────────────────────────────────────────────
+    const streakCanvas = document.createElement('canvas');
+    streakCanvas.width = window.innerWidth;
+    streakCanvas.height = window.innerHeight;
+    streakCanvas.style.cssText = `
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      z-index: 6; opacity: 0;
+      pointer-events: none;
+    `;
+    document.body.appendChild(streakCanvas);
+    const ctx = streakCanvas.getContext('2d');
+
+    // ── THREE.JS CAMERA (projection math only — no renderer needed) ───────────
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      1,
+      3000
+    );
+    camera.position.z = 0;
+
+    // FIX 1 — updateMatrixWorld() must be called once after creation so that
+    //          vec3.project(camera) produces correct screen-space coordinates.
+    //          Without this the projection matrix is uninitialised and every
+    //          star maps to the same wrong screen position.
+    camera.updateMatrixWorld();
+
+    const vec3 = new THREE.Vector3();
+
+    function projectToScreen(x, y, z) {
+      vec3.set(x, y, z);
+      vec3.project(camera);
+      return {
+        x: (vec3.x * 0.5 + 0.5) * window.innerWidth,
+        y: (-vec3.y * 0.5 + 0.5) * window.innerHeight,
+        visible: vec3.z < 1.0
+      };
+    }
+
+    // ── DRAW LOOP ──────────────────────────────────────────────────────────────
+    let currentSpeed = 0;
+    let targetSpeed = 0;
+    let tunnelActive = false;
+
+    function drawTunnel() {
+      requestAnimationFrame(drawTunnel);
+
+      currentSpeed += (targetSpeed - currentSpeed) * 0.04;
+
+      const trailAlpha = tunnelActive
+        ? Math.max(0.08, 0.35 - (currentSpeed / 80) * 0.27)
+        : 0.4;
+
+      // FIX 2 — was: rgba(0, 0, 8, \${ trailAlpha })   ← broken (no backticks)
+      ctx.fillStyle = `rgba(0, 0, 8, ${trailAlpha})`;
+      ctx.fillRect(0, 0, streakCanvas.width, streakCanvas.height);
+
+      for (let i = 0; i < STAR_COUNT; i++) {
+        const [px, py, pz] = starPositions[i];
+
+        starPrevPositions[i] = [px, py, pz];
+
+        const move = currentSpeed * (1 + (-pz / 2000) * 0.5);
+        starPositions[i][2] = pz + move;
+
+        if (starPositions[i][2] > -5) { initStar(i); continue; }
+
+        const curr = projectToScreen(starPositions[i][0], starPositions[i][1], starPositions[i][2]);
+        const prev = projectToScreen(px, py, pz);
+
+        if (!curr.visible || !prev.visible) continue;
+        if (curr.x < -10 || curr.x > window.innerWidth + 10) continue;
+        if (curr.y < -10 || curr.y > window.innerHeight + 10) continue;
+
+        const depth = Math.abs(starPositions[i][2]) / 2000;
+        const brightness = 1.0 - depth * 0.7;
+        const [r, g, b] = starColors[i];
+        const alpha = Math.min(1.0, brightness + currentSpeed / 60);
+        const lineWidth = Math.max(0.4, (1 - depth) * (0.5 + currentSpeed / 40));
+
+        ctx.beginPath();
+        ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(curr.x, curr.y);
+        ctx.lineWidth = lineWidth;
+
+        // FIX 3 — was: rgba(${ ... }, ${ ... }, ...)  ← broken (no backticks)
+        ctx.strokeStyle = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${alpha})`;
+        ctx.stroke();
+      }
+
+      if (tunnelActive && currentSpeed > 5) {
+        const vigIntensity = Math.min(0.85, currentSpeed / 80);
+        const gradient = ctx.createRadialGradient(
+          window.innerWidth / 2, window.innerHeight / 2, window.innerWidth * 0.25,
+          window.innerWidth / 2, window.innerHeight / 2, window.innerWidth * 0.75
+        );
+
+        // FIX 4 — was: rgba(0, 0, 0, 0)         ← a bare function call, not a string
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+
+        // FIX 5 — was: rgba(0, 0, 0, \${ vigIntensity })  ← escaped $ + no backticks
+        gradient.addColorStop(1, `rgba(0, 0, 0, ${vigIntensity})`);
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
+
+    drawTunnel();
+
+    // ── CLICK HANDLER ──────────────────────────────────────────────────────────
+    let animationStarted = false;
+
+    function startSequence() {
+      if (animationStarted) return;
+      animationStarted = true;
+      tunnelActive = true;
+
+      const tl = gsap.timeline();
+
+      tl
+        .to('#btn-subtext', { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0)
+        .to('.glitch-text', { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0)
+        .to('#crt-button', { scale: 0.85, opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.05)
+        .to('#button-container', { display: 'none', duration: 0 }, 0.5)
+        .to('#watermark', { opacity: 0, duration: 0.4 }, 0)
+        .to('#date-badge', { opacity: 0, duration: 0.4 }, 0)
+        .to('#tagline', { opacity: 0, duration: 0.4 }, 0)
+        .to(streakCanvas, { opacity: 1, duration: 0.4 }, 0.3)
+
+        .to({ speed: 0 }, {
+          speed: 85,
+          duration: 2.0,
+          ease: 'power2.in',
+          onUpdate: function () {
+            targetSpeed = this.targets()[0].speed;
+          }
+        }, 0.4)
+
+        .to('#flash-overlay', { opacity: 1, duration: 0.4, ease: 'power1.in' }, 2.5)
+
+        .call(() => {
+          window.location.href = 'index.html';
+        }, null, 2.9);
+    }
+
+    // ── MOUSE PARALLAX ─────────────────────────────────────────────────────────
+    document.addEventListener('mousemove', (e) => {
+      if (animationStarted) return;
+      const x = (e.clientX / window.innerWidth - 0.5) * 10;
+      const y = (e.clientY / window.innerHeight - 0.5) * 10;
+      gsap.to('#space-bg', { x, y, duration: 1.8, ease: 'power1.out' });
+    });
+
+    // ── RESIZE ─────────────────────────────────────────────────────────────────
+    window.addEventListener('resize', () => {
+      streakCanvas.width = window.innerWidth;
+      streakCanvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      camera.updateMatrixWorld(); // keep projection in sync after resize too
+    });
+  </script>
+</body>
+
+</html>

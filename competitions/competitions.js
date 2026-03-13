@@ -386,10 +386,48 @@ function triggerBurst() {
         setTimeout(() => { hintBar.style.display = 'none'; }, 400);
     }
 
+    prebuildGrid(); // ✅ ADDED — builds grid cards invisibly before scatter starts
+
     // Step B: After 600ms, scatter items to grid positions
     setTimeout(() => {
         scatterToGrid();
     }, 600);
+}
+
+function prebuildGrid() {
+    const grid = document.getElementById('grid-container');
+    grid.innerHTML = '';
+
+    competitions.forEach((comp) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.transform = 'scale(0)';
+        card.style.opacity = '0';
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-emoji">${comp.emoji || '✨'}</div>
+            <span class="card-category">${comp.category}</span>
+            <h1 class="card-title">${comp.name}</h1>
+            <p class="card-overview">${comp.overview}</p>
+            <div class="card-footer">
+              <div class="card-meta">
+                <a href="${comp.rulebook}" class="rulebook-link" target="_blank">📄 Rulebook</a>
+                <h4 class="card-prize">Prize: ${comp.prize}</h4>
+              </div>
+              <a href="#" class="register-btn">Register</a>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+    });
+
+    // Grid is built but invisible — display:grid so layout is computed
+    grid.style.display = 'grid';
+    grid.style.opacity = '0';
+    grid.style.position = 'relative';
+    grid.style.transform = 'none';
+    grid.style.top = 'auto';
+    grid.style.left = 'auto';
 }
 
 function computeGridPositions() {
@@ -420,11 +458,23 @@ function computeGridPositions() {
 }
 
 function scatterToGrid() {
+    // ✅ ADDED: Hide atom scene immediately when dots start flying
+    const sceneEl = document.getElementById('scene');
+    if (sceneEl) sceneEl.style.display = 'none';
+
+    const ringA = document.getElementById('ring-line-a');
+    const ringB = document.getElementById('ring-line-b');
+    if (ringA) ringA.style.display = 'none';
+    if (ringB) ringB.style.display = 'none';
+
+    const scrollTrackEl = document.getElementById('scroll-track');
+    if (scrollTrackEl) scrollTrackEl.style.display = 'none';
+
     // Stop the rAF orbit loop
     orbitActive = false;
     cancelAnimationFrame(orbitRAF);
 
-    // RESET SCROLL TO TOP FIRST so viewport Y = document Y (Fix 5)
+    // RESET SCROLL TO TOP FIRST so viewport Y = document Y
     window.scrollTo({ top: 0, behavior: 'instant' });
 
     // Calculate where the 16 grid cells will be
@@ -468,59 +518,30 @@ function scatterToGrid() {
 }
 
 function showFinalGrid() {
-    // Hide atom scene and scroll track
-    document.getElementById('scene').style.display = 'none';
-    document.getElementById('scroll-track').style.display = 'none';
-
-    // Hide orbit-container immediately — scatter is already complete (ran for 900ms before this call)
+    // Hide orbit container (scatter animation is fully done by now)
     const oc = document.getElementById('orbit-container');
     if (oc) oc.style.display = 'none';
 
-    // Switch body to normal scroll mode
+    // Switch body to scroll mode — lock for 1 frame to prevent mobile jump
     document.body.classList.add('grid-active');
-    document.body.style.overflow = 'auto';
-    document.body.style.overflowX = 'hidden';
-
-    // Build and show the grid
-    const grid = document.getElementById('grid-container');
-    grid.innerHTML = '';
-    competitions.forEach((comp, i) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.transform = 'scale(0)';
-        card.innerHTML = `
-          <div class="card-inner">
-            <div class="card-emoji">${comp.emoji || '✨'}</div>
-            <span class="card-category">${comp.category}</span>
-            <h1 class="card-title">${comp.name}</h1>
-            <p class="card-overview">${comp.overview}</p>
-            <div class="card-footer">
-              <div class="card-meta">
-                <a href="${comp.rulebook}" class="rulebook-link" target="_blank">📄 Rulebook</a>
-                <h4 class="card-prize">Prize: ${comp.prize}</h4>
-              </div>
-              <a href="#" class="register-btn">Register</a>
-            </div>
-          </div>
-        `;
-        grid.appendChild(card);
+    document.body.style.overflowY = 'hidden';
+    requestAnimationFrame(() => {
+        document.body.style.overflowY = 'auto';
+        document.body.style.overflowX = 'hidden';
     });
 
-    grid.style.display = 'grid';
-    // Remove fixed position on grid container to allow normal scrolling
-    grid.style.position = 'relative';
-    grid.style.transform = 'none';
-    grid.style.top = 'auto';
-    grid.style.left = 'auto';
+    // Fade the pre-built grid in (it exists at opacity:0 from prebuildGrid)
+    const grid = document.getElementById('grid-container');
+    grid.style.transition = 'opacity 0.2s ease';
+    grid.getBoundingClientRect(); // force reflow so CSS transition triggers
+    grid.style.opacity = '1';
 
-    window.scrollTo({ top: 0, behavior: 'instant' });
-
-    // Staggered pop-in
+    // Pop cards in with stagger — starts at 0ms (no 80ms dead gap)
     const cards = grid.querySelectorAll('.card');
     cards.forEach((card, i) => {
         setTimeout(() => {
+            card.style.opacity = '1';
             card.style.transform = 'scale(1)';
-        }, 80 + i * 55);
+        }, i * 50);
     });
-
 }
