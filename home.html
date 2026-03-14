@@ -1,21 +1,858 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AAYAM hompage</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAYAM '26 | Beyond the Event Horizon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Color Palette */
+    :root {
+      --bg-base: #000008;
+      --bg-space: #05050f;
+      --accent-orange: #ff7b00;
+      --accent-gold: #ffb347;
+      --accent-cyan: #00d4ff;
+      --text-primary: #ffffff;
+      --text-secondary: #a0aec0;
+      --text-dim: rgba(255, 255, 255, 0.4);
+      --glass-bg: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4, .nav-brand, .btn-primary, .btn-secondary, .stat-number, .orbitron { font-family: 'Orbitron', sans-serif; }
+    .mono { font-family: 'Share Tech Mono', monospace; }
+    a { text-decoration: none; color: inherit; transition: all 0.3s ease; }
+
+    /* Utilities */
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 48px; }
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+    }
+
+    /* Section Reveal */
+    .section-reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .section-reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* --- Navbar --- */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 48px;
+      background: rgba(0,0,8,0.7);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,123,0,0.12);
+      transition: background 0.3s, border-bottom-color 0.3s;
+    }
+    #navbar.scrolled {
+      background: rgba(0,0,8,0.95);
+      border-bottom-color: rgba(255,123,0,0.3);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 22px; font-weight: 900; color: #fff;
+    }
+    .nav-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-orange);
+      box-shadow: 0 0 10px rgba(255,123,0,0.8);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,123,0,0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(255,123,0,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,123,0,0); }
+    }
+    .nav-year { color: var(--accent-orange); }
+
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a:not(.nav-cta) {
+      font-family: 'Share Tech Mono', monospace; font-size: 13px;
+      color: rgba(255,255,255,0.6); text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .nav-links a:not(.nav-cta):hover { color: #fff; }
+
+    .nav-cta {
+      background: var(--accent-orange); color: #000008;
+      font-family: 'Orbitron', sans-serif; font-weight: 700;
+      padding: 10px 24px; border-radius: 4px;
+      box-shadow: 0 0 20px rgba(255,123,0,0.3);
+    }
+    .nav-cta:hover { box-shadow: 0 0 30px rgba(255,123,0,0.5); transform: translateY(-2px); }
+    .nav-hamburger { display: none; }
+
+    /* --- Hero Section --- */
+    #hero {
+      position: relative; width: 100vw; height: 100vh;
+      overflow: hidden; display: flex; align-items: center;
+    }
+    #bh-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right, rgba(0,0,8,0.88) 0%, rgba(0,0,8,0.5) 42%, rgba(0,0,8,0.0) 100%);
+      z-index: 1;
+    }
+    .hero-content { position: relative; z-index: 2; max-width: 580px; padding: 0 80px; margin-top: 80px; }
+    .hero-eyebrow {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--accent-orange);
+      margin-bottom: 24px;
+    }
+    .eyebrow-dot { width: 6px; height: 6px; background: var(--accent-orange); border-radius: 50%; }
+    .hero-title {
+      font-family: 'Orbitron', sans-serif; font-size: clamp(64px, 9vw, 110px); font-weight: 900;
+      line-height: 1; margin-bottom: 16px;
+    }
+    .title-main { color: #ffffff; }
+    .title-year { color: var(--accent-orange); }
+    .hero-tagline {
+      font-family: 'Share Tech Mono', monospace; font-size: 14px;
+      color: rgba(255,255,255,0.45); letter-spacing: 0.4em;
+      text-transform: uppercase; margin-bottom: 32px;
+    }
+    .hero-desc {
+      font-family: 'Inter', sans-serif; font-size: 16px; color: rgba(255,255,255,0.7);
+      line-height: 1.6; margin-bottom: 40px;
+    }
+    .hero-ctas { display: flex; gap: 24px; margin-bottom: 56px; align-items: center; }
+    .btn-primary {
+      display: inline-block; background: var(--accent-orange); color: #000008;
+      font-family: 'Orbitron', sans-serif; font-weight: 700;
+      padding: 16px 32px; border-radius: 4px; border: none; font-size: 15px; cursor: pointer;
+      box-shadow: 0 0 20px rgba(255,123,0,0.3); text-decoration: none; transition: all 0.3s;
+    }
+    .btn-primary:hover { box-shadow: 0 0 30px rgba(255,123,0,0.5); transform: translateY(-2px); }
+    .btn-secondary {
+      display: inline-block; background: transparent; color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      font-family: 'Orbitron', sans-serif; font-weight: 700;
+      padding: 15px 32px; border-radius: 4px; font-size: 15px; cursor: pointer; text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent-cyan); color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0,212,255,0.2);
+    }
+    .hero-stats-strip { display: flex; align-items: center; gap: 32px; }
+    .hs-item { display: flex; flex-direction: column; gap: 4px; }
+    .hs-label { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+    .hs-val { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 20px; color: #fff; }
+    .hs-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.1); }
+
+    .scroll-hint {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2;
+    }
+    .scroll-line {
+      width: 1px; height: 40px; background: rgba(255,123,0,0.5);
+      animation: scrollPulse 2s infinite; transform-origin: top;
+    }
+    @keyframes scrollPulse {
+      0% { transform: scaleY(0); opacity: 0; }
+      50% { transform: scaleY(1); opacity: 1; }
+      100% { transform: scaleY(1); opacity: 0; }
+    }
+    .scroll-hint span {
+      font-family: 'Share Tech Mono', monospace; font-size: 9px;
+      color: var(--accent-orange); letter-spacing: 0.2em;
+    }
+
+    /* --- Common Section Styles --- */
+    .sect-label {
+      font-family: 'Share Tech Mono', monospace; font-size: 12px; display: inline-block;
+      color: var(--accent-orange); margin-bottom: 24px; letter-spacing: 0.1em;
+    }
+    .sect-title {
+      font-family: 'Orbitron', sans-serif; font-size: 42px; font-weight: 700;
+      line-height: 1.2; margin-bottom: 32px;
+    }
+    .sect-title span.orange { color: var(--accent-orange); }
+    .sect-title span.cyan { color: var(--accent-cyan); }
+
+    /* --- About Section --- */
+    #about { background: #05050f; border-top: 1px solid rgba(255,123,0,0.08); padding: 120px 0; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+    .about-text p { color: rgba(255,255,255,0.6); font-size: 16px; line-height: 1.8; margin-bottom: 24px; }
+    .about-tags { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+    .about-tags span {
+      font-family: 'Share Tech Mono', monospace; font-size: 13px;
+      padding: 6px 16px; border: 1px solid rgba(255,123,0,0.3); border-radius: 20px;
+      color: var(--accent-orange); background: rgba(255,123,0,0.05);
+    }
+    .about-cards { display: flex; flex-direction: column; gap: 24px; }
+    .about-card { padding: 32px; border-left: 2px solid var(--accent-orange) !important; }
+    .about-card h3 { display: flex; align-items: center; gap: 16px; font-size: 20px; margin-bottom: 12px; color: #fff; }
+    .about-card p { color: rgba(255,255,255,0.6); font-size: 15px; margin: 0; }
+
+    /* --- Stats Section --- */
+    #stats {
+      background: #000008; padding: 80px 0;
+      border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); text-align: center; }
+    .stat-item { position: relative; padding: 0 16px; }
+    .stat-item:not(:last-child)::after {
+      content: ''; position: absolute; right: 0; top: 10%; height: 80%;
+      width: 1px; background: rgba(255,255,255,0.05);
+    }
+    .stat-number { font-size: 36px; font-weight: 700; color: var(--accent-orange); margin-bottom: 8px; display: block; line-height: 1; }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.05em; font-family: 'Share Tech Mono', monospace; }
+
+    /* --- Events Section --- */
+    #events { background: #05050f; padding: 120px 0; }
+    .events-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 64px; }
+    .events-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .event-card {
+      padding: 32px; border: 1px solid rgba(255,255,255,0.07);
+      transition: all 0.3s; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; height: 100%;
+    }
+    .event-card:hover {
+      transform: translateY(-4px); border-color: var(--accent-orange);
+      background: radial-gradient(circle at top right, rgba(255,123,0,0.05), var(--glass-bg));
+    }
+    .ec-icon { font-size: 36px; margin-bottom: 24px; display: block; }
+    .ec-title { font-size: 18px; color: #fff; margin-bottom: 12px; font-weight: 600; font-family: 'Orbitron', sans-serif;}
+    .ec-list { color: rgba(255,255,255,0.45); font-size: 13px; flex-grow: 1; margin-bottom: 32px; }
+    .ec-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+    .ec-badge {
+      font-family: 'Share Tech Mono', monospace; font-size: 11px;
+      color: var(--accent-cyan); background: rgba(0,212,255,0.1);
+      padding: 4px 10px; border-radius: 20px;
+    }
+    .ec-prize { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700; color: var(--accent-orange); }
+
+    /* --- Timeline Section --- */
+    #timeline { background: #000008; padding: 120px 0; }
+    .timeline-list { margin-top: 64px; display: flex; flex-direction: column; }
+    .timeline-item { display: grid; grid-template-columns: 100px 40px 1fr; gap: 0 24px; }
+    .timeline-day { text-align: right; font-size: 13px; color: var(--accent-orange); padding-top: 4px; font-weight: bold; text-transform: uppercase; font-family: 'Orbitron', sans-serif; }
+    .timeline-connector { display: flex; flex-direction: column; align-items: center; }
+    .tc-dot {
+      width: 14px; height: 14px; border-radius: 50%; background: var(--accent-orange);
+      box-shadow: 0 0 10px rgba(255,123,0,0.5); z-index: 2; margin-top: 4px;
+    }
+    .tc-line { width: 2px; flex-grow: 1; background: rgba(255,123,0,0.3); min-height: 80px; }
+    .timeline-item:last-child .tc-line { display: none; }
+    .timeline-content { padding-bottom: 64px; }
+    .timeline-content h3 { font-size: 20px; color: #fff; margin-bottom: 8px; font-family: 'Orbitron', sans-serif;}
+    .timeline-content p { color: rgba(255,255,255,0.6); font-size: 15px; margin-bottom: 16px; }
+    .timeline-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .timeline-chips span {
+      font-family: 'Share Tech Mono', monospace; font-size: 11px;
+      padding: 4px 10px; background: rgba(255,123,0,0.08); color: rgba(255,255,255,0.8);
+      border-radius: 2px; border: 1px solid rgba(255,123,0,0.15);
+    }
+
+    /* --- Sponsors Section --- */
+    #sponsors { background: #05050f; padding: 120px 0; text-align: center; }
+    .sponsors-subtitle {
+      color: rgba(255,255,255,0.5); font-size: 15px; margin-bottom: 64px; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .sponsors-subtitle a { color: var(--accent-orange); font-family: 'Share Tech Mono', monospace; font-size: 13px;}
+    .sp-tier { margin-bottom: 48px; }
+    .sp-tier h4 {
+      font-family: 'Share Tech Mono', monospace; font-size: 12px;
+      color: rgba(255,255,255,0.3); letter-spacing: 0.1em; margin-bottom: 24px; text-transform: uppercase;
+    }
+    .sp-row { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+    .sp-slot {
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; transition: all 0.3s;
+      color: rgba(255,255,255,0.15); font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .sp-slot:hover { border-color: rgba(255,123,0,0.4); box-shadow: 0 0 20px rgba(255,123,0,0.1); color: rgba(255,255,255,0.3); }
+    .sp-title { width: 320px; height: 120px; }
+    .sp-gold { width: 180px; height: 80px; }
+    .sp-partner { width: 140px; height: 60px; font-size: 11px; }
+
+    /* --- Footer --- */
+    footer { background: #000005; border-top: 1px solid rgba(255,255,255,0.05); padding: 80px 0 32px 0; }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 64px; margin-bottom: 64px; }
+    .f-brand { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 16px; display: inline-block; font-family: 'Orbitron', sans-serif;}
+    .f-brand span { color: var(--accent-orange); }
+    .f-desc { color: rgba(255,255,255,0.5); font-size: 15px; margin-bottom: 24px; max-width: 400px; }
+    .f-socials { display: flex; gap: 16px; }
+    .f-socials a { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+    .f-socials a:hover { color: var(--accent-orange); }
+
+    .f-heading { font-family: 'Orbitron', sans-serif; font-size: 16px; color: #fff; margin-bottom: 24px; font-weight: 600; }
+    .f-links { display: flex; flex-direction: column; gap: 12px; }
+    .f-links a { color: rgba(255,255,255,0.5); font-size: 14px; }
+    .f-links a:hover { color: var(--accent-cyan); transform: translateX(4px); }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.05); padding-top: 32px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-bottom p { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.2); margin: 0; }
+
+    /* Responsive Breakpoints */
+    /* Tablet (≤1024px) */
+    @media (max-width: 1024px) {
+      .stats-grid  { grid-template-columns: repeat(3, 1fr); gap: 32px 0; }
+      .stat-item:nth-child(3)::after, .stat-item:last-child::after { display: none; }
+      .events-grid { grid-template-columns: repeat(2, 1fr); }
+      .about-grid  { grid-template-columns: 1fr; gap: 48px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Mobile (≤768px) */
+    @media (max-width: 768px) {
+      .container       { padding: 0 24px; }
+      section          { padding: 80px 0; }
+      #navbar          { padding: 16px 24px; }
+      .nav-links       { display: none; position: fixed; top: 70px; left: 0; right: 0;
+                         background: rgba(0,0,8,0.98); flex-direction: column;
+                         padding: 24px; gap: 20px; border-bottom: 1px solid rgba(255,123,0,0.2); }
+      .nav-links.nav-open { display: flex; }
+      .nav-hamburger   { display: block; background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; }
+      .hero-content    { padding: 0 24px; margin-top: 0; text-align: center; display: flex; flex-direction: column; align-items: center;}
+      .hero-eyebrow    { justify-content: center; }
+      .hero-desc       { text-align: center; }
+      .hero-stats-strip{ flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 16px;}
+      .stats-grid      { grid-template-columns: repeat(2, 1fr); gap: 40px 0;}
+      .stat-item:nth-child(even)::after, .stat-item:nth-child(3)::after { display: none; }
+      .events-grid     { grid-template-columns: 1fr; }
+      .events-header   { flex-direction: column; align-items: flex-start; gap: 16px;}
+      .timeline-item   { grid-template-columns: 60px 24px 1fr; gap: 0 16px; }
+      .footer-grid     { grid-template-columns: 1fr; gap: 32px; }
+      .footer-bottom   { flex-direction: column; text-align: center; gap: 8px; }
+      .hs-divider      { display: none; }
+      .hs-item         { flex: 1 1 40%; align-items: center; }
+      .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+      .hero-ctas       { flex-direction: column; gap: 16px; width: 100%; }
+    }
+    @media (min-width: 769px) {
+      .nav-hamburger { display: none; }
+    }
+  </style>
 </head>
-<nav>
-    <ul>
-        <li><a href="home.html">Home</a></li>
-        <li><a href="competitions.html">Competitions</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="contact.html">Contact Us</a></li>
-    </ul>
+<body>
+  <!-- Navbar -->
+  <nav id="navbar">
+    <a href="#" class="nav-brand">
+      <span class="nav-dot"></span>
+      AAYAM <span class="nav-year">'26</span>
+    </a>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#events">Events</a>
+      <a href="#timeline">Schedule</a>
+      <a href="#sponsors">Sponsors</a>
+      <a href="competitions/competitions.html" class="nav-cta">Register</a>
+    </div>
+    <button class="nav-hamburger" aria-label="Menu">☰</button>
+  </nav>
 
-    <body>
+  <!-- Hero Section -->
+  <section id="hero">
+    <canvas id="bh-canvas"></canvas>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        National Techfest · March 2026
+      </div>
+      <h1 class="hero-title">
+        <span class="title-main">AAYAM</span>
+        <span class="title-year">'26</span>
+      </h1>
+      <p class="hero-tagline">Beyond the Event Horizon</p>
+      <p class="hero-desc">
+        Where science bends reality. Three days of cutting-edge competitions,
+        tech innovation, and brilliance that defies the laws of the ordinary.
+      </p>
+      <div class="hero-ctas">
+        <a href="competitions/competitions.html" class="btn-primary">Explore Events →</a>
+        <a href="#about" class="btn-secondary">Learn More</a>
+      </div>
+      <div class="hero-stats-strip">
+        <div class="hs-item"><span class="hs-label">Date</span><span class="hs-val">March 2026</span></div>
+        <div class="hs-divider"></div>
+        <div class="hs-item"><span class="hs-label">Events</span><span class="hs-val">16+</span></div>
+        <div class="hs-divider"></div>
+        <div class="hs-item"><span class="hs-label">Prize Pool</span><span class="hs-val">₹3,20,000</span></div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      <span>SCROLL</span>
+    </div>
+  </section>
 
-    </body>
+  <!-- About Section -->
+  <section id="about" class="section-reveal">
+    <div class="container about-grid">
+      <div class="about-text">
+        <span class="sect-label">// 01 ABOUT</span>
+        <h2 class="sect-title">India's Next <br> <span class="orange">Tech Frontier</span></h2>
+        <p>AAYAM '26 is the annual national techfest — a three-day convergence of engineering brilliance, creative innovation, and competitive spirit. Students from across the country gather to push boundaries and redefine what's possible.</p>
+        <p>From combat robotics to competitive programming, drone racing to esports — every event is a battle for supremacy at the bleeding edge of technology.</p>
+        <div class="about-tags">
+          <span>Robotics</span><span>Coding</span><span>Aerospace</span><span>Esports</span><span>Design</span><span>Business</span>
+        </div>
+      </div>
+      <div class="about-cards">
+        <div class="about-card glass-card">
+          <h3>🏆 Compete</h3>
+          <p>16 fierce competitions across 6 domains. Only the best survive the event horizon.</p>
+        </div>
+        <div class="about-card glass-card">
+          <h3>🔭 Explore</h3>
+          <p>Tech exhibitions, live demos, and cutting-edge projects from across the country.</p>
+        </div>
+        <div class="about-card glass-card">
+          <h3>⚡ Connect</h3>
+          <p>Network with engineers, developers, and innovators rewriting the future.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <!-- Stats Section -->
+  <section id="stats" class="section-reveal">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item" data-target="16" data-suffix="+"><span class="stat-number">0</span><span class="stat-label">Competitions</span></div>
+        <div class="stat-item" data-prefix="₹" data-target="320000" data-suffix="+"><span class="stat-number">0</span><span class="stat-label">Prize Pool</span></div>
+        <div class="stat-item" data-target="1000" data-suffix="+"><span class="stat-number">0</span><span class="stat-label">Participants</span></div>
+        <div class="stat-item" data-target="3"><span class="stat-number">0</span><span class="stat-label">Festival Days</span></div>
+        <div class="stat-item" data-target="6"><span class="stat-number">0</span><span class="stat-label">Tech Domains</span></div>
+        <div class="stat-item" data-target="50" data-suffix="+"><span class="stat-number">0</span><span class="stat-label">Colleges</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Events Section -->
+  <section id="events" class="section-reveal">
+    <div class="container">
+      <div class="events-header">
+        <div>
+          <span class="sect-label">// 03 EVENTS</span>
+          <h2 class="sect-title" style="margin-bottom:0;">Choose Your <br> <span class="orange">Battleground</span></h2>
+        </div>
+        <a href="competitions/competitions.html" class="btn-secondary">View All Events →</a>
+      </div>
+      <div class="events-grid">
+        <a href="competitions/competitions.html" class="event-card glass-card">
+          <span class="ec-icon">🤖</span>
+          <h3 class="ec-title">Robotics</h3>
+          <p class="ec-list">Robo Soccer · Maze Solver</p>
+          <div class="ec-bottom">
+            <span class="ec-badge">2 Events</span>
+            <span class="ec-prize">₹40,000</span>
+          </div>
+        </a>
+        <a href="competitions/competitions.html" class="event-card glass-card">
+          <span class="ec-icon">💻</span>
+          <h3 class="ec-title">Coding</h3>
+          <p class="ec-list">CP Individual · CP Team · Bug Bash · Codestorm</p>
+          <div class="ec-bottom">
+            <span class="ec-badge">4 Events</span>
+            <span class="ec-prize">₹80,000</span>
+          </div>
+        </a>
+        <a href="competitions/competitions.html" class="event-card glass-card">
+          <span class="ec-icon">🎮</span>
+          <h3 class="ec-title">Esports</h3>
+          <p class="ec-list">Free Fire · BGMI · Smash Karts · Valorant</p>
+          <div class="ec-bottom">
+            <span class="ec-badge">4 Events</span>
+            <span class="ec-prize">₹80,000</span>
+          </div>
+        </a>
+        <a href="competitions/competitions.html" class="event-card glass-card">
+          <span class="ec-icon">🚀</span>
+          <h3 class="ec-title">Aerospace</h3>
+          <p class="ec-list">Rocket Launching · Drone Hurdle</p>
+          <div class="ec-bottom">
+            <span class="ec-badge">2 Events</span>
+            <span class="ec-prize">₹40,000</span>
+          </div>
+        </a>
+        <a href="competitions/competitions.html" class="event-card glass-card">
+          <span class="ec-icon">📐</span>
+          <h3 class="ec-title">Design</h3>
+          <p class="ec-list">CAD Modeling</p>
+          <div class="ec-bottom">
+            <span class="ec-badge">1 Event</span>
+            <span class="ec-prize">₹20,000</span>
+          </div>
+        </a>
+        <a href="competitions/competitions.html" class="event-card glass-card">
+          <span class="ec-icon">🦈</span>
+          <h3 class="ec-title">Creative & Business</h3>
+          <p class="ec-list">Shark Tank · Photography · Cinematography</p>
+          <div class="ec-bottom">
+            <span class="ec-badge">3 Events</span>
+            <span class="ec-prize">₹60,000</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline Section -->
+  <section id="timeline" class="section-reveal">
+    <div class="container" style="max-width:800px;">
+      <span class="sect-label" style="text-align:center;">// 04 SCHEDULE</span>
+      <h2 class="sect-title" style="text-align:center;">Three Days. <br> <span class="cyan">One Mission.</span></h2>
+      <div class="timeline-list">
+        <div class="timeline-item">
+          <div class="timeline-day">Day 01</div>
+          <div class="timeline-connector">
+            <div class="tc-dot"></div>
+            <div class="tc-line"></div>
+          </div>
+          <div class="timeline-content">
+            <h3>Opening Ceremony & Qualifiers</h3>
+            <p>The gates open. Participants arrive and basic qualifier rounds for heavy events begin.</p>
+            <div class="timeline-chips">
+              <span>CP Individual</span><span>Bug Bash</span><span>Robo Soccer QR</span><span>Free Fire QR</span>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-day">Day 02</div>
+          <div class="timeline-connector">
+            <div class="tc-dot"></div>
+            <div class="tc-line"></div>
+          </div>
+          <div class="timeline-content">
+            <h3>Main Events & Semifinals</h3>
+            <p>The heat rises. Core technical domain competitions run simultaneously.</p>
+            <div class="timeline-chips">
+              <span>Rocket Launch</span><span>Drone Hurdle</span><span>CAD Modeling</span><span>BGMI Finals</span>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-day">Day 03</div>
+          <div class="timeline-connector">
+            <div class="tc-dot"></div>
+            <div class="tc-line"></div>
+          </div>
+          <div class="timeline-content">
+            <h3>Grand Finals & Closing</h3>
+            <p>Only the best remain. Finals, pitches, and the ultimate prize distribution.</p>
+            <div class="timeline-chips">
+              <span>Shark Tank</span><span>Valorant Finals</span><span>Prize Ceremony</span><span>Cinematography</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sponsors Section -->
+  <section id="sponsors" class="section-reveal">
+    <div class="container" style="max-width:1000px;">
+      <span class="sect-label">// 05 SPONSORS</span>
+      <h2 class="sect-title" style="margin-bottom:16px;">Powered By <br> <span class="orange">Visionaries</span></h2>
+      <div class="sponsors-subtitle">
+        Interested in sponsoring AAYAM '26? <a href="mailto:sponsor@aayam.com">Get in touch →</a>
+      </div>
+      
+      <div class="sp-tier">
+        <h4>Title Sponsor</h4>
+        <div class="sp-row">
+          <div class="sp-slot sp-title glass-card">YOUR LOGO</div>
+        </div>
+      </div>
+      <div class="sp-tier">
+        <h4>Gold Sponsors</h4>
+        <div class="sp-row">
+          <div class="sp-slot sp-gold glass-card">YOUR LOGO</div>
+          <div class="sp-slot sp-gold glass-card">YOUR LOGO</div>
+          <div class="sp-slot sp-gold glass-card">YOUR LOGO</div>
+        </div>
+      </div>
+      <div class="sp-tier">
+        <h4>Community Partners</h4>
+        <div class="sp-row">
+          <div class="sp-slot sp-partner glass-card">YOUR LOGO</div>
+          <div class="sp-slot sp-partner glass-card">YOUR LOGO</div>
+          <div class="sp-slot sp-partner glass-card">YOUR LOGO</div>
+          <div class="sp-slot sp-partner glass-card">YOUR LOGO</div>
+          <div class="sp-slot sp-partner glass-card">YOUR LOGO</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="f-col-1">
+          <div class="f-brand">AAYAM <span>'26</span></div>
+          <p class="f-desc">Where science bends reality. Join the next tech frontier in the greatest battle of intellect and innovation.</p>
+          <div class="f-socials">
+            <a href="#">Instagram</a>
+            <a href="#">LinkedIn</a>
+            <a href="#">Twitter</a>
+          </div>
+        </div>
+        <div class="f-col-2">
+          <h4 class="f-heading">Quick Links</h4>
+          <div class="f-links">
+            <a href="#about">About</a>
+            <a href="#events">Events</a>
+            <a href="#timeline">Schedule</a>
+            <a href="competitions/competitions.html">Register</a>
+          </div>
+        </div>
+        <div class="f-col-3">
+          <h4 class="f-heading">Contact</h4>
+          <div class="f-links">
+            <a href="mailto:hello@aayam.com">Email Us</a>
+            <a href="#">WhatsApp</a>
+            <a href="#">Campus Map</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 AAYAM Techfest. All rights reserved.</p>
+        <p>Made with ♥ by the AAYAM Tech Team</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 1. Black Hole Canvas
+    const canvas = document.getElementById('bh-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W = canvas.width  = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+
+    // Pre-generate 800 stars
+    const stars = Array.from({length: 800}, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.3 + Math.random() * 1.2,
+      opacity: 0.2 + Math.random() * 0.8,
+      drift: (Math.random() - 0.5) * 0.015
+    }));
+
+    let diskRotation = 0;
+
+    function drawBH() {
+      requestAnimationFrame(drawBH);
+      diskRotation += 0.0003;
+
+      // 1. Deep space background gradient
+      const bg = ctx.createRadialGradient(W*0.7, H*0.55, W*0.04, W*0.5, H*0.5, W*0.9);
+      bg.addColorStop(0,   '#010e16');
+      bg.addColorStop(0.3, '#020b12');
+      bg.addColorStop(0.7, '#010608');
+      bg.addColorStop(1,   '#000005');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Stars — drift slowly
+      stars.forEach(s => {
+        s.x += s.drift;
+        if (s.x > W) s.x = 0;
+        if (s.x < 0) s.x = W;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(200, 220, 255, ${s.opacity * 0.6})`;
+        ctx.fill();
+      });
+
+      // 3. Black hole parameters
+      const cx     = W * 0.62;
+      const cy     = H * 0.50;
+      const shadow = W * 0.068;   // event horizon radius
+      const diskRx = W * 0.21;    // disk outer x-radius
+      const diskRy = W * 0.042;   // disk outer y-radius (thin = tilted)
+      const innerRx = shadow * 1.10;
+      const innerRy = shadow * 0.22;
+      const tilt    = diskRotation;
+
+      // 4. Outer gravitational lensing haze
+      const outerGlow = ctx.createRadialGradient(cx, cy, shadow, cx, cy, shadow * 6);
+      outerGlow.addColorStop(0,   'rgba(180, 80, 10, 0.18)');
+      outerGlow.addColorStop(0.3, 'rgba(100, 40, 5,  0.08)');
+      outerGlow.addColorStop(1,   'rgba(0, 0, 0,     0)');
+      ctx.fillStyle = outerGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, shadow * 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Accretion disk — BOTTOM HALF (bright, facing viewer)
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(tilt);
+
+      const layers = 20;
+      for (let i = layers; i >= 0; i--) {
+        const t  = i / layers;  // 1=outer, 0=inner
+        const rx = innerRx + (diskRx - innerRx) * t;
+        const ry = innerRy + (diskRy - innerRy) * t;
+
+        // Color: inner=cream, mid=orange, outer=dark brown
+        let r, g, b;
+        if (t < 0.2)      { r=255; g=235; b=190; }         // cream
+        else if (t < 0.5) { const p=(t-0.2)/0.3; r=255; g=Math.round(200-120*p); b=Math.round(120-100*p); }  // orange
+        else              { const p=(t-0.5)/0.5; r=Math.round(240-180*p); g=Math.round(80-65*p); b=10; }      // dark brown
+
+        const alpha = (t < 0.1 ? t/0.1 : 1) * 0.88;
+        const lw    = (diskRy - innerRy) / layers * 2.8;
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI);  // bottom half only
+        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx.lineWidth   = lw;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 6. Gravitational lensing arc — appears ABOVE the shadow
+      // This is the defining Interstellar effect
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(tilt);
+
+      const lensGrad = ctx.createLinearGradient(-innerRx*1.2, 0, innerRx*1.2, 0);
+      lensGrad.addColorStop(0,    'rgba(255,180,80,0)');
+      lensGrad.addColorStop(0.15, 'rgba(255,210,130,0.55)');
+      lensGrad.addColorStop(0.5,  'rgba(255,240,200,0.92)');
+      lensGrad.addColorStop(0.85, 'rgba(255,210,130,0.55)');
+      lensGrad.addColorStop(1,    'rgba(255,180,80,0)');
+      ctx.beginPath();
+      ctx.ellipse(0, 0, innerRx*1.16, innerRy*1.38, 0, Math.PI, 0);  // TOP half arc
+      ctx.strokeStyle = lensGrad;
+      ctx.lineWidth   = 4.5;
+      ctx.stroke();
+
+      // Thin secondary arc
+      ctx.beginPath();
+      ctx.ellipse(0, 0, innerRx*1.05, innerRy*1.12, 0, Math.PI*0.08, Math.PI*0.92);
+      ctx.strokeStyle = 'rgba(255,245,220,0.3)';
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // 7. Disk TOP HALF (dim — back side of disk)
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(tilt);
+      for (let i = layers; i >= 0; i--) {
+        const t  = i / layers;
+        const rx = innerRx + (diskRx - innerRx) * t;
+        const ry = innerRy + (diskRy - innerRy) * t;
+        let r=200, g=90, b=20;
+        if (t > 0.6) { r=110; g=45; b=8; }
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, Math.PI, 0);  // top half only
+        ctx.strokeStyle = `rgba(${r},${g},${b},${t*0.32})`;  // much dimmer
+        ctx.lineWidth   = (diskRy - innerRy) / layers * 2.8;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 8. Event horizon shadow — pure black
+      ctx.beginPath();
+      ctx.arc(cx, cy, shadow, 0, Math.PI*2);
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+
+      // 9. Photon ring — thin glowing ring at shadow edge
+      const pr = ctx.createRadialGradient(cx, cy, shadow*0.95, cx, cy, shadow*1.08);
+      pr.addColorStop(0,   'rgba(255,230,160,0)');
+      pr.addColorStop(0.4, 'rgba(255,240,200,0.75)');
+      pr.addColorStop(0.7, 'rgba(255,190,90,0.45)');
+      pr.addColorStop(1,   'rgba(255,140,40,0)');
+      ctx.beginPath();
+      ctx.arc(cx, cy, shadow*1.015, 0, Math.PI*2);
+      ctx.strokeStyle = pr;
+      ctx.lineWidth   = shadow * 0.12;
+      ctx.stroke();
+    }
+
+    requestAnimationFrame(drawBH);
+
+    window.addEventListener('resize', () => {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      stars.forEach(s => { s.x = Math.random()*W; s.y = Math.random()*H; });
+    });
+
+    // 2. Navbar scroll state
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+    });
+
+    // 3. Intersection Observer — section reveal + counter trigger
+    function animateCounter(el) {
+      if (el.classList.contains('animated')) return; // Prevent re-animating
+      el.classList.add('animated');
+
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      const prefix = el.dataset.prefix || '';
+      const numEl  = el.querySelector('.stat-number');
+      const duration = 2000;
+      const start    = performance.now();
+      function update(now) {
+        const p = Math.min((now - start) / duration, 1);
+        const e = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        numEl.textContent = prefix + Math.floor(e * target).toLocaleString('en-IN') + suffix;
+        if (p < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          if (entry.target.id === 'stats') {
+            document.querySelectorAll('.stat-item').forEach(animateCounter);
+          }
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.section-reveal').forEach(el => revealObs.observe(el));
+
+    // 4. Mobile hamburger
+    document.querySelector('.nav-hamburger').addEventListener('click', () => {
+      document.querySelector('.nav-links').classList.toggle('nav-open');
+    });
+
+    // Close mobile nav when clicking a link
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          document.querySelector('.nav-links').classList.remove('nav-open');
+        }
+      });
+    });
+  </script>
+</body>
 </html>
